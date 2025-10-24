@@ -36,7 +36,7 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
 
     @Override
     public AuthenticationResponse login(LoginRequest request) {
-        log.info("Login request: {}", request);
+        log.info("Login request for email: {}", request.getEmail());
 
         try {
             authenticationManager.authenticate(
