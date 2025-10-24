@@ -17,5 +17,5 @@ public interface IJwtService {
 
     List<String> extractRoles(String token);
 
-    boolean isTokenValid(String token, String expectedUsername);
+    boolean isTokenValid(String token, String expectedEmail);
 }
