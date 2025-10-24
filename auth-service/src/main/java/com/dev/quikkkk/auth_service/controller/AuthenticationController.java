@@ -1,7 +1,9 @@
 package com.dev.quikkkk.auth_service.controller;
 
+import com.dev.quikkkk.auth_service.dto.request.LoginRequest;
 import com.dev.quikkkk.auth_service.dto.request.RegistrationRequest;
 import com.dev.quikkkk.auth_service.dto.response.ApiResponse;
+import com.dev.quikkkk.auth_service.dto.response.AuthenticationResponse;
 import com.dev.quikkkk.auth_service.service.IAuthenticationService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -21,5 +23,10 @@ public class AuthenticationController {
     public ResponseEntity<ApiResponse<Void>> register(@Valid @RequestBody RegistrationRequest request) {
         service.register(request);
         return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<ApiResponse<AuthenticationResponse>> login(@Valid @RequestBody LoginRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(service.login(request)));
     }
 }
