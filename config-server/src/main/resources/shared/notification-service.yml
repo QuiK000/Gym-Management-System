@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: notification-service
+  cloud:
+    discovery:
+      enabled: false
+  data:
+    redis:
+      host: localhost
+      port: 6380
+      database: 0
+    mongodb:
+      username: root
+      password: root
+      host: localhost
+      port: 27017
+      database: notification_db
+      authentication-database: admin
+  kafka:
+    consumer:
+      bootstrap-servers: 172.19.94.160:9092
+      group-id: notification-service
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring:
+          json:
+            type:
+              mapping: "com.dev.quikkkk.auth_service.dto.kafka.CodeConfirmation"
+            trusted:
+              packages: '*'
+  mail:
+    host: localhost
+    port: 1025
+    username: root
+    password: root
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          connectiontimeout: 5000
+          timeout: 30000
+          writetimeout: 5000
+          ssl:
+            trust: "*"
+
+eureka:
+  instance:
+    hostname: localhost
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+server:
+  port: 8030
