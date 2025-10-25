@@ -12,6 +12,7 @@ import com.dev.quikkkk.auth_service.repository.IUserCredentialsRepository;
 import com.dev.quikkkk.auth_service.service.IAuthenticationService;
 import com.dev.quikkkk.auth_service.service.IBruteForceProtectionService;
 import com.dev.quikkkk.auth_service.service.IJwtService;
+import com.dev.quikkkk.auth_service.utils.NetworkUtils;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -25,7 +26,10 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.EMAIL_ALREADY_EXISTS;
+import static com.dev.quikkkk.auth_service.exception.ErrorCode.INTERNAL_SERVER_ERROR;
+import static com.dev.quikkkk.auth_service.exception.ErrorCode.INVALID_CREDENTIALS;
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.PASSWORD_MISMATCH;
+import static com.dev.quikkkk.auth_service.exception.ErrorCode.TOO_MANY_ATTEMPTS;
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.USER_NOT_FOUND;
 
 @Service
@@ -44,7 +48,8 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
     @Override
     public AuthenticationResponse login(LoginRequest request) {
         log.info("Login request for email: {}", request.getEmail());
-
+        String clientIp = NetworkUtils.getClientIp().orElseThrow(() -> new BusinessException(INTERNAL_SERVER_ERROR));
+        if (bruteForceProtectionService.isBlocked(clientIp)) throw new BusinessException(TOO_MANY_ATTEMPTS);
 
         try {
             authenticationManager.authenticate(
@@ -54,15 +59,14 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
                     )
             );
 
+            bruteForceProtectionService.registerSuccessfulAttempt(clientIp);
             UserCredentials userCredentials = findUserByEmail(request.getEmail());
 
             CompletableFuture<String> accessTokenFuture = CompletableFuture.supplyAsync(
-                    () -> jwtService.generateAccessToken(userCredentials)
-            );
+                    () -> jwtService.generateAccessToken(userCredentials));
 
             CompletableFuture<String> refreshTokenFuture = CompletableFuture.supplyAsync(
-                    () -> jwtService.generateRefreshToken(userCredentials)
-            );
+                    () -> jwtService.generateRefreshToken(userCredentials));
 
             String accessToken = accessTokenFuture.get();
             String refreshToken = refreshTokenFuture.get();
@@ -74,7 +78,15 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
                     .tokenType(TOKEN_TYPE)
                     .build();
         } catch (Exception e) {
-            throw new RuntimeException(e); // TODO
+            bruteForceProtectionService.registerFailedAttempt(clientIp);
+            int remainingAttempts = bruteForceProtectionService.getRemainingAttempts(clientIp);
+
+            log.warn(
+                    "Failed login attempt for user: {} from IP: {}. Remaining attempts: {}",
+                    request.getEmail(), clientIp, remainingAttempts
+            );
+
+            throw new BusinessException(INVALID_CREDENTIALS);
         }
     }
 
