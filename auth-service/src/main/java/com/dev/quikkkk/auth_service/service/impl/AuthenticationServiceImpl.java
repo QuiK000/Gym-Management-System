@@ -5,10 +5,12 @@ import com.dev.quikkkk.auth_service.dto.request.RegistrationRequest;
 import com.dev.quikkkk.auth_service.dto.response.AuthenticationResponse;
 import com.dev.quikkkk.auth_service.entity.Role;
 import com.dev.quikkkk.auth_service.entity.UserCredentials;
+import com.dev.quikkkk.auth_service.exception.BusinessException;
 import com.dev.quikkkk.auth_service.mapper.UserMapper;
 import com.dev.quikkkk.auth_service.repository.IRoleRepository;
 import com.dev.quikkkk.auth_service.repository.IUserCredentialsRepository;
 import com.dev.quikkkk.auth_service.service.IAuthenticationService;
+import com.dev.quikkkk.auth_service.service.IBruteForceProtectionService;
 import com.dev.quikkkk.auth_service.service.IJwtService;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -22,6 +24,10 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
+import static com.dev.quikkkk.auth_service.exception.ErrorCode.EMAIL_ALREADY_EXISTS;
+import static com.dev.quikkkk.auth_service.exception.ErrorCode.PASSWORD_MISMATCH;
+import static com.dev.quikkkk.auth_service.exception.ErrorCode.USER_NOT_FOUND;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -33,10 +39,12 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
     private final UserMapper mapper;
     private final AuthenticationManager authenticationManager;
     private final IJwtService jwtService;
+    private final IBruteForceProtectionService bruteForceProtectionService;
 
     @Override
     public AuthenticationResponse login(LoginRequest request) {
         log.info("Login request for email: {}", request.getEmail());
+
 
         try {
             authenticationManager.authenticate(
@@ -101,15 +109,15 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
     @Override
     public UserCredentials findUserByEmail(String email) {
         return userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(); // TODO
+                .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
     }
 
     private void checkUserEmail(String email) {
         boolean emailExists = userRepository.existsByEmailIgnoreCase(email);
-//        if (emailExists) throw new BusinessException(EMAIL_ALREADY_EXISTS); // TODO
+        if (emailExists) throw new BusinessException(EMAIL_ALREADY_EXISTS);
     }
 
     private void checkPasswords(String password, String confirmPassword) {
-        // TODO
+        if (password == null || !password.equals(confirmPassword)) throw new BusinessException(PASSWORD_MISMATCH);
     }
 }
