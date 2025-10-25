@@ -52,6 +52,17 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
         if (bruteForceProtectionService.isBlocked(clientIp)) throw new BusinessException(TOO_MANY_ATTEMPTS);
 
         try {
+            UserCredentials userCredentials = findUserByEmail(request.getEmail());
+            if (!userCredentials.isEnabled()) {
+                log.warn("User {} is disabled", request.getEmail());
+                throw new BusinessException(INVALID_CREDENTIALS);
+            }
+
+            if (userCredentials.isLocked()) {
+                log.warn("User {} is locked", request.getEmail());
+                throw new BusinessException(INVALID_CREDENTIALS);
+            }
+
             authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
                             request.getEmail(),
@@ -60,7 +71,6 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
             );
 
             bruteForceProtectionService.registerSuccessfulAttempt(clientIp);
-            UserCredentials userCredentials = findUserByEmail(request.getEmail());
 
             CompletableFuture<String> accessTokenFuture = CompletableFuture.supplyAsync(
                     () -> jwtService.generateAccessToken(userCredentials));
@@ -114,8 +124,7 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
         userRepository.save(userCredentials);
         log.info("User {} registered", userCredentials.getEmail());
 
-        defaultRole.getUserCredentials().add(userCredentials);
-        roleRepository.save(defaultRole);
+//        String ipAddress = NetworkUtils.getClientIp().orElseThrow(() -> new BusinessException(INTERNAL_SERVER_ERROR)); TODO
     }
 
     @Override
