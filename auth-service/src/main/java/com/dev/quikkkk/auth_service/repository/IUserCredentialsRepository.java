@@ -11,4 +11,6 @@ public interface IUserCredentialsRepository extends JpaRepository<UserCredential
     boolean existsByEmailIgnoreCase(String email);
 
     Optional<UserCredentials> findByEmailIgnoreCase(String email);
+
+    Optional<UserCredentials> findByEmail(String email);
 }

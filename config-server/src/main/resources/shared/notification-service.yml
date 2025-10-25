@@ -3,7 +3,7 @@ spring:
     name: notification-service
   cloud:
     discovery:
-      enabled: false
+      enabled: true
   data:
     redis:
       host: localhost

@@ -11,6 +11,7 @@ import com.dev.quikkkk.auth_service.repository.IRoleRepository;
 import com.dev.quikkkk.auth_service.repository.IUserCredentialsRepository;
 import com.dev.quikkkk.auth_service.service.IAuthenticationService;
 import com.dev.quikkkk.auth_service.service.IBruteForceProtectionService;
+import com.dev.quikkkk.auth_service.service.IEmailVerificationService;
 import com.dev.quikkkk.auth_service.service.IJwtService;
 import com.dev.quikkkk.auth_service.utils.NetworkUtils;
 import jakarta.persistence.EntityNotFoundException;
@@ -40,10 +41,11 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
 
     private final IUserCredentialsRepository userRepository;
     private final IRoleRepository roleRepository;
-    private final UserMapper mapper;
-    private final AuthenticationManager authenticationManager;
     private final IJwtService jwtService;
     private final IBruteForceProtectionService bruteForceProtectionService;
+    private final IEmailVerificationService emailVerificationService;
+    private final UserMapper mapper;
+    private final AuthenticationManager authenticationManager;
 
     @Override
     public AuthenticationResponse login(LoginRequest request) {
@@ -117,14 +119,19 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
         UserCredentials userCredentials = mapper.toUser(request);
 
         userCredentials.setRoles(roles);
-//        userCredentials.setEnabled(false); // TODO
+        userCredentials.setEnabled(false);
         userCredentials.setEmailVerified(false);
 
         log.debug("Saving user: {}", userCredentials);
         userRepository.save(userCredentials);
         log.info("User {} registered", userCredentials.getEmail());
 
-//        String ipAddress = NetworkUtils.getClientIp().orElseThrow(() -> new BusinessException(INTERNAL_SERVER_ERROR)); TODO
+        String ipAddress = NetworkUtils.getClientIp().orElseThrow(() -> new BusinessException(INTERNAL_SERVER_ERROR));
+        emailVerificationService.sendVerificationCode(
+                userCredentials.getId(),
+                userCredentials.getEmail(),
+                ipAddress
+        );
     }
 
     @Override
