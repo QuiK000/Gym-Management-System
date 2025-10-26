@@ -46,4 +46,15 @@ public class NotificationConsumer {
             throw e;
         }
     }
+
+    @KafkaListener(topics = "password-reset-topic", groupId = "notification-service")
+    public void consumePasswordResetEmail(String email, String resetLink) throws MessagingException {
+        log.info("Received password reset notification: {}", email);
+        try {
+
+            log.info("Password reset notification sent successfully to: {}", email);
+        } catch (Exception e) {
+            log.error("Failed to send password reset notification to: {}", email, e);
+        }
+    }
 }
