@@ -187,6 +187,17 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
     }
 
     @Override
+    public void forgotPassword(String email) {
+        log.info("Forgot password request for email: {}", email);
+        UserCredentials user = findUserByEmail(email);
+
+        if (user == null) {
+            log.warn("User {} not found", email);
+            throw new BusinessException(USER_NOT_FOUND);
+        }
+    }
+
+    @Override
     public Map<String, Object> validateToken(String token) {
         log.info("Validating token: {}", token);
 

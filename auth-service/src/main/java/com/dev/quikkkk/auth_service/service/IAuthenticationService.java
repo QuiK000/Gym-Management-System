@@ -17,6 +17,8 @@ public interface IAuthenticationService {
 
     void logout(String token);
 
+    void forgotPassword(String email);
+
     Map<String, Object> validateToken(String token);
 
     UserCredentials findUserByEmail(String email);
