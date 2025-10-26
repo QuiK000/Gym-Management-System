@@ -1,5 +1,6 @@
 package com.dev.quikkkk.auth_service.service.impl;
 
+import com.dev.quikkkk.auth_service.dto.kafka.PasswordChangedEvent;
 import com.dev.quikkkk.auth_service.dto.kafka.PasswordResetEvent;
 import com.dev.quikkkk.auth_service.dto.kafka.UserLoginEvent;
 import com.dev.quikkkk.auth_service.dto.kafka.UserRegisteredEvent;
@@ -261,6 +262,13 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
         resetToken.setUsed(true);
         passwordResetTokenRepository.save(resetToken);
 
+        PasswordChangedEvent event = PasswordChangedEvent.builder()
+                .userId(user.getId())
+                .email(user.getEmail())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        kafkaTemplate.send("password-changed-topic", event);
         log.info("Password reset successful for user: {}", user.getId());
     }
 
