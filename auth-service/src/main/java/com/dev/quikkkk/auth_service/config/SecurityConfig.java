@@ -2,6 +2,7 @@ package com.dev.quikkkk.auth_service.config;
 
 import com.dev.quikkkk.auth_service.security.BruteForceProtectionFilter;
 import com.dev.quikkkk.auth_service.security.JwtFilter;
+import com.dev.quikkkk.auth_service.security.RefreshTokenFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,11 +23,9 @@ public class SecurityConfig {
     private static final String[] PUBLIC_URLS = {
             "/api/v1/auth/register",
             "/api/v1/auth/login",
-            "/api/v1/auth/refresh",
             "/api/v1/auth/logout",
             "/api/v1/auth/verify-email",
             "/api/v1/auth/resend-verification",
-            "/api/v1/auth/verification-status",
             "/actuator/**",
             "/v2/api-docs",
             "/v3/api-docs",
@@ -41,6 +40,7 @@ public class SecurityConfig {
     };
 
     private final JwtFilter jwtFilter;
+    private final RefreshTokenFilter refreshTokenFilter;
     private final BruteForceProtectionFilter bruteForceProtectionFilter;
 
     @Bean
@@ -55,6 +55,7 @@ public class SecurityConfig {
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(STATELESS))
                 .addFilterBefore(bruteForceProtectionFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(refreshTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

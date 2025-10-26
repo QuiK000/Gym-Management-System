@@ -16,6 +16,8 @@ public interface IJwtService {
 
     String extractUserId(String token);
 
+    String extractTokenType(String token);
+
     List<String> extractRoles(String token);
 
     Date extractExpiration(String token);

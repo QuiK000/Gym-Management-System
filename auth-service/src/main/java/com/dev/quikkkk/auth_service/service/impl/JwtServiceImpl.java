@@ -103,6 +103,11 @@ public class JwtServiceImpl implements IJwtService {
     }
 
     @Override
+    public String extractTokenType(String token) {
+        return getCachedClaims(token).get(TOKEN_TYPE).toString();
+    }
+
+    @Override
     @SuppressWarnings("unchecked")
     public List<String> extractRoles(String token) {
         return (List<String>) getCachedClaims(token).get("roles");

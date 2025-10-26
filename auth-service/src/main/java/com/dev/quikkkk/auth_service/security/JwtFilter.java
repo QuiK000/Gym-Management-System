@@ -35,7 +35,6 @@ public class JwtFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         if (request.getServletPath().equals("/api/v1/auth/login") ||
                 request.getServletPath().equals("/api/v1/auth/register") ||
-                request.getServletPath().equals("/api/v1/auth/refresh-token") ||
                 request.getServletPath().equals("/api/v1/auth/logout") ||
                 request.getServletPath().equals("/api/v1/auth/verify-email") ||
                 request.getServletPath().equals("/api/v1/auth/resend-verification")
