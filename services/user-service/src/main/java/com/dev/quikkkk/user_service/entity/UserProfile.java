@@ -19,9 +19,6 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @SuperBuilder
 public class UserProfile extends BaseEntity {
-    @Column(name = "user_id", nullable = false)
-    private String userId;
-
     @Column(name = "first_name", nullable = false)
     private String firstName;
 
