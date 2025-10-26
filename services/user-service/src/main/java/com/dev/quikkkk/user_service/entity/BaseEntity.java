@@ -2,8 +2,6 @@ package com.dev.quikkkk.user_service.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -18,8 +16,6 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
 
-import static jakarta.persistence.GenerationType.UUID;
-
 @MappedSuperclass
 @Getter
 @Setter
@@ -28,10 +24,6 @@ import static jakarta.persistence.GenerationType.UUID;
 @SuperBuilder
 @EntityListeners(AuditingEntityListener.class)
 public class BaseEntity {
-    @Id
-    @GeneratedValue(strategy = UUID)
-    private String id;
-
     @CreatedDate
     @Column(name = "created_date", updatable = false, nullable = false)
     private LocalDateTime createdDate;

@@ -2,6 +2,7 @@ package com.dev.quikkkk.user_service.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
@@ -20,6 +21,9 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @SuperBuilder
 public class UserProfile extends BaseEntity {
+    @Id
+    private String id;
+
     @Column(name = "first_name", nullable = false)
     private String firstName;
 

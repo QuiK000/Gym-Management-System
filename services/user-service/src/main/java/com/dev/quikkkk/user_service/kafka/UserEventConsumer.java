@@ -27,9 +27,9 @@ public class UserEventConsumer {
     @Transactional
     public void consumeUserRegisteredEvent(UserRegisteredEvent event) {
         log.info("Received user registration event for USER_ID: {}, email: {}", event.getUserId(), event.getEmail());
+
         try {
-            UserProfile existing = entityManager.find(UserProfile.class, event.getUserId());
-            if (existing != null) {
+            if (repository.existsById(event.getUserId())) {
                 log.warn("User profile already exists for USER_ID: {}", event.getUserId());
                 return;
             }
@@ -49,9 +49,8 @@ public class UserEventConsumer {
                     .createdBy("SYSTEM")
                     .build();
 
-            entityManager.persist(profile);
-            entityManager.flush();
-            log.info("User profile saved for USER_ID: {}", event.getUserId());
+            repository.saveAndFlush(profile);
+            log.info("User profile created successfully for USER_ID: {}", profile.getId());
         } catch (Exception e) {
             log.error("Failed to create user profile for USER_ID: {}", event.getUserId(), e);
             throw e;
