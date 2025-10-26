@@ -1,6 +1,7 @@
 package com.dev.quikkkk.auth_service.controller;
 
 import com.dev.quikkkk.auth_service.dto.request.LoginRequest;
+import com.dev.quikkkk.auth_service.dto.request.RefreshTokenRequest;
 import com.dev.quikkkk.auth_service.dto.request.RegistrationRequest;
 import com.dev.quikkkk.auth_service.dto.request.ResendVerificationRequest;
 import com.dev.quikkkk.auth_service.dto.request.VerifyEmailRequest;
@@ -52,6 +53,21 @@ public class AuthenticationController {
     ) {
         String ipAddress = NetworkUtils.getClientIp(httpRequest);
         emailVerificationService.resendVerificationCode(request, ipAddress);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PostMapping("/refresh-token")
+    public ResponseEntity<ApiResponse<AuthenticationResponse>> refreshToken(@RequestBody RefreshTokenRequest request) {
+        return ResponseEntity.ok(ApiResponse.success(authenticationService.refreshToken(request)));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<ApiResponse<Void>> logout(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer "))
+            return ResponseEntity.badRequest().body(ApiResponse.error("Authorization header is missing or invalid"));
+        String token = authHeader.substring(7);
+        authenticationService.logout(token);
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 

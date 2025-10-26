@@ -1,6 +1,7 @@
 package com.dev.quikkkk.auth_service.service.impl;
 
 import com.dev.quikkkk.auth_service.dto.request.LoginRequest;
+import com.dev.quikkkk.auth_service.dto.request.RefreshTokenRequest;
 import com.dev.quikkkk.auth_service.dto.request.RegistrationRequest;
 import com.dev.quikkkk.auth_service.dto.response.AuthenticationResponse;
 import com.dev.quikkkk.auth_service.entity.Role;
@@ -13,6 +14,7 @@ import com.dev.quikkkk.auth_service.service.IAuthenticationService;
 import com.dev.quikkkk.auth_service.service.IBruteForceProtectionService;
 import com.dev.quikkkk.auth_service.service.IEmailVerificationService;
 import com.dev.quikkkk.auth_service.service.IJwtService;
+import com.dev.quikkkk.auth_service.service.ITokenBlackListService;
 import com.dev.quikkkk.auth_service.utils.NetworkUtils;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
@@ -44,6 +46,7 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
     private final IJwtService jwtService;
     private final IBruteForceProtectionService bruteForceProtectionService;
     private final IEmailVerificationService emailVerificationService;
+    private final ITokenBlackListService tokenBlackListService;
     private final UserMapper mapper;
     private final AuthenticationManager authenticationManager;
 
@@ -101,6 +104,18 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
     }
 
     @Override
+    public AuthenticationResponse refreshToken(RefreshTokenRequest request) {
+        log.info("Refresh token request: {}", request);
+        String newAccessToken = jwtService.refreshAccessToken(request.getRefreshToken());
+
+        return AuthenticationResponse.builder()
+                .accessToken(newAccessToken)
+                .refreshToken(request.getRefreshToken())
+                .tokenType(TOKEN_TYPE)
+                .build();
+    }
+
+    @Override
     @Transactional
     public void register(RegistrationRequest request) {
         log.info("Registration request: {}", request);
@@ -130,6 +145,16 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
                 userCredentials.getEmail(),
                 ipAddress
         );
+    }
+
+    @Override
+    public void logout(String token) {
+        log.info("Logging out user with token: {}", token);
+
+        String actualToken = token.startsWith(TOKEN_TYPE) ? token.substring(TOKEN_TYPE.length()).trim() : token;
+        tokenBlackListService.blacklistToken(actualToken);
+
+        log.info("User logged out successfully");
     }
 
     @Override
