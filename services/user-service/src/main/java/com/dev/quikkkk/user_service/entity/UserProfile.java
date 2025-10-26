@@ -2,6 +2,8 @@ package com.dev.quikkkk.user_service.entity;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
@@ -44,6 +46,7 @@ public class UserProfile extends BaseEntity {
     private LocalDateTime dateOfBirth;
 
     @Column(name = "gender")
+    @Enumerated(EnumType.STRING)
     private GenderType gender;
 
     @Column(name = "avatar_url")
