@@ -1,5 +1,6 @@
 package com.dev.quikkkk.auth_service.service.impl;
 
+import com.dev.quikkkk.auth_service.dto.kafka.UserLoginEvent;
 import com.dev.quikkkk.auth_service.dto.kafka.UserRegisteredEvent;
 import com.dev.quikkkk.auth_service.dto.request.LoginRequest;
 import com.dev.quikkkk.auth_service.dto.request.RefreshTokenRequest;
@@ -92,6 +93,15 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
 
             String accessToken = accessTokenFuture.get();
             String refreshToken = refreshTokenFuture.get();
+
+            log.info("User {} logged in successfully", request.getEmail());
+            UserLoginEvent event = UserLoginEvent.builder()
+                    .userId(userCredentials.getId())
+                    .timestamp(LocalDateTime.now())
+                    .build();
+
+            log.info("Sending login event to kafka topic");
+            kafkaTemplate.send("user-login-topic", event);
 
             log.info("Login response: {}", accessToken);
             return AuthenticationResponse.builder()
