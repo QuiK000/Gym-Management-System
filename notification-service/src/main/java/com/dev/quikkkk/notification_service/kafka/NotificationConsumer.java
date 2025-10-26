@@ -2,6 +2,7 @@ package com.dev.quikkkk.notification_service.kafka;
 
 import com.dev.quikkkk.notification_service.document.Notification;
 import com.dev.quikkkk.notification_service.dto.CodeConfirmation;
+import com.dev.quikkkk.notification_service.dto.PasswordReset;
 import com.dev.quikkkk.notification_service.repository.INotificationRepository;
 import com.dev.quikkkk.notification_service.service.IEmailService;
 import jakarta.mail.MessagingException;
@@ -21,7 +22,11 @@ public class NotificationConsumer {
     private final INotificationRepository repository;
     private final IEmailService service;
 
-    @KafkaListener(topics = "code-topic", groupId = "notification-service")
+    @KafkaListener(
+            topics = "code-topic",
+            groupId = "notification-service",
+            containerFactory = "codeConfirmationKafkaListenerContainerFactory"
+    )
     public void consumeCodeEmailVerification(CodeConfirmation notification) throws MessagingException {
         log.info("Received email verification notification: {}", notification);
         try {
@@ -47,14 +52,18 @@ public class NotificationConsumer {
         }
     }
 
-    @KafkaListener(topics = "password-reset-topic", groupId = "notification-service")
-    public void consumePasswordResetEmail(String email, String resetLink) throws MessagingException {
-        log.info("Received password reset notification: {}", email);
+    @KafkaListener(
+            topics = "password-reset-topic",
+            groupId = "notification-service",
+            containerFactory = "passwordResetKafkaListenerContainerFactory"
+    )
+    public void consumePasswordResetEmail(PasswordReset event) throws MessagingException {
+        log.info("Received password reset notification: {}", event.email());
         try {
-
-            log.info("Password reset notification sent successfully to: {}", email);
+            service.sendPasswordResetEmail(event.email(), event.resetLink());
+            log.info("Password reset notification sent successfully to: {}", event.email());
         } catch (Exception e) {
-            log.error("Failed to send password reset notification to: {}", email, e);
+            log.error("Failed to send password reset notification to: {}", event.email(), e);
         }
     }
 }

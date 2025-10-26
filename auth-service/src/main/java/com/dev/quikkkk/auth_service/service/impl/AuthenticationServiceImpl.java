@@ -1,15 +1,18 @@
 package com.dev.quikkkk.auth_service.service.impl;
 
+import com.dev.quikkkk.auth_service.dto.kafka.PasswordResetEvent;
 import com.dev.quikkkk.auth_service.dto.kafka.UserLoginEvent;
 import com.dev.quikkkk.auth_service.dto.kafka.UserRegisteredEvent;
 import com.dev.quikkkk.auth_service.dto.request.LoginRequest;
 import com.dev.quikkkk.auth_service.dto.request.RefreshTokenRequest;
 import com.dev.quikkkk.auth_service.dto.request.RegistrationRequest;
 import com.dev.quikkkk.auth_service.dto.response.AuthenticationResponse;
+import com.dev.quikkkk.auth_service.entity.PasswordResetToken;
 import com.dev.quikkkk.auth_service.entity.Role;
 import com.dev.quikkkk.auth_service.entity.UserCredentials;
 import com.dev.quikkkk.auth_service.exception.BusinessException;
 import com.dev.quikkkk.auth_service.mapper.UserMapper;
+import com.dev.quikkkk.auth_service.repository.IPasswordResetTokenRepository;
 import com.dev.quikkkk.auth_service.repository.IRoleRepository;
 import com.dev.quikkkk.auth_service.repository.IUserCredentialsRepository;
 import com.dev.quikkkk.auth_service.service.IAuthenticationService;
@@ -22,9 +25,12 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -33,6 +39,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.EMAIL_ALREADY_EXISTS;
@@ -40,6 +47,8 @@ import static com.dev.quikkkk.auth_service.exception.ErrorCode.INTERNAL_SERVER_E
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.INVALID_CREDENTIALS;
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.INVALID_TOKEN;
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.PASSWORD_MISMATCH;
+import static com.dev.quikkkk.auth_service.exception.ErrorCode.PASSWORD_RESET_TOKEN_INVALID;
+import static com.dev.quikkkk.auth_service.exception.ErrorCode.PASSWORD_RESET_TOKEN_USED;
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.TOKEN_REVOKED;
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.TOO_MANY_ATTEMPTS;
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.USER_NOT_FOUND;
@@ -56,9 +65,14 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
     private final IBruteForceProtectionService bruteForceProtectionService;
     private final IEmailVerificationService emailVerificationService;
     private final ITokenBlackListService tokenBlackListService;
+    private final IPasswordResetTokenRepository passwordResetTokenRepository;
     private final UserMapper mapper;
     private final AuthenticationManager authenticationManager;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final PasswordEncoder passwordEncoder;
+
+    @Value("${app.config.frontend-url:http://localhost:3000}")
+    private String frontendUrl;
 
     @Override
     public AuthenticationResponse login(LoginRequest request) {
@@ -187,14 +201,74 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
     }
 
     @Override
+    @Transactional
     public void forgotPassword(String email) {
         log.info("Forgot password request for email: {}", email);
         UserCredentials user = findUserByEmail(email);
 
         if (user == null) {
-            log.warn("User {} not found", email);
-            throw new BusinessException(USER_NOT_FOUND);
+            log.warn("Password reset requested for non-existing email: {}", email);
+            return;
         }
+
+        passwordResetTokenRepository.deleteByUserId(user.getId());
+
+        String token = UUID.randomUUID().toString();
+        String resetLink = frontendUrl + "/reset-password?token=" + token;
+
+        PasswordResetToken resetToken = PasswordResetToken.builder()
+                .userId(user.getId())
+                .token(token)
+                .expiresAt(LocalDateTime.now().plusHours(1))
+                .used(false)
+                .createdBy("SYSTEM")
+                .build();
+
+        passwordResetTokenRepository.save(resetToken);
+        PasswordResetEvent event = PasswordResetEvent.builder()
+                .email(email)
+                .resetLink(resetLink)
+                .build();
+
+        kafkaTemplate.send("password-reset-topic", event);
+        log.info("Password reset email sent successfully for user: {}", user.getId());
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(String token, String newPassword) {
+        log.info("Attempting to reset password for token: {}", token);
+
+        PasswordResetToken resetToken = passwordResetTokenRepository.findByTokenAndUsedFalse(token)
+                .orElseThrow(() -> new BusinessException(PASSWORD_RESET_TOKEN_INVALID));
+
+        if (resetToken.isExpired()) {
+            log.warn("Expired password reset token used");
+            throw new BusinessException(PASSWORD_RESET_TOKEN_INVALID);
+        }
+
+        if (resetToken.isUsed()) {
+            log.warn("Already used password reset token");
+            throw new BusinessException(PASSWORD_RESET_TOKEN_USED);
+        }
+
+        UserCredentials user = userRepository.findById(resetToken.getUserId())
+                .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
+
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        resetToken.setUsed(true);
+        passwordResetTokenRepository.save(resetToken);
+
+        log.info("Password reset successful for user: {}", user.getId());
+    }
+
+    @Override
+    @Scheduled(cron = "0 0 * * * *")
+    public void cleanupExpiredPasswordResetTokens() {
+        log.info("Cleaning up expired password reset tokens");
+        passwordResetTokenRepository.deleteExpiredTokens(LocalDateTime.now());
     }
 
     @Override
@@ -222,7 +296,7 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
             result.put("userId", userId);
             result.put("email", email);
             result.put("roles", roles);
-            result.put("tokenType", extractTokenType(token));
+            result.put("tokenType", extractTokenType());
 
             log.info("Token validation successful for user: {}", userId);
             return result;
@@ -249,7 +323,7 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
         if (password == null || !password.equals(confirmPassword)) throw new BusinessException(PASSWORD_MISMATCH);
     }
 
-    private String extractTokenType(String token) {
+    private String extractTokenType() {
         try {
             return "ACCESS_TOKEN";
         } catch (Exception e) {

@@ -19,6 +19,10 @@ public interface IAuthenticationService {
 
     void forgotPassword(String email);
 
+    void resetPassword(String token, String newPassword);
+
+    void cleanupExpiredPasswordResetTokens();
+
     Map<String, Object> validateToken(String token);
 
     UserCredentials findUserByEmail(String email);

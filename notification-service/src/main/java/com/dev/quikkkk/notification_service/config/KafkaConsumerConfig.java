@@ -1,6 +1,7 @@
 package com.dev.quikkkk.notification_service.config;
 
 import com.dev.quikkkk.notification_service.dto.CodeConfirmation;
+import com.dev.quikkkk.notification_service.dto.PasswordReset;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -21,7 +22,7 @@ public class KafkaConsumerConfig {
     private String bootstrapServers;
 
     @Bean
-    public ConsumerFactory<String, CodeConfirmation> consumerFactory() {
+    public ConsumerFactory<String, CodeConfirmation> codeConfirmationConsumerFactory() {
         Map<String, Object> config = new HashMap<>();
 
         config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -43,9 +44,39 @@ public class KafkaConsumerConfig {
     }
 
     @Bean
-    public ConcurrentKafkaListenerContainerFactory<String, CodeConfirmation> kafkaListenerContainerFactory() {
+    public ConcurrentKafkaListenerContainerFactory<String, CodeConfirmation> codeConfirmationKafkaListenerContainerFactory() {
         ConcurrentKafkaListenerContainerFactory<String, CodeConfirmation> factory = new ConcurrentKafkaListenerContainerFactory<>();
-        factory.setConsumerFactory(consumerFactory());
+        factory.setConsumerFactory(codeConfirmationConsumerFactory());
+        return factory;
+    }
+
+    @Bean
+    public ConsumerFactory<String, PasswordReset> passwordResetConsumerFactory() {
+        Map<String, Object> config = new HashMap<>();
+
+        config.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
+        config.put(ConsumerConfig.GROUP_ID_CONFIG, "notification-service");
+        config.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        config.put(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        config.put(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, ErrorHandlingDeserializer.class);
+        config.put(ErrorHandlingDeserializer.KEY_DESERIALIZER_CLASS, StringDeserializer.class);
+        config.put(ErrorHandlingDeserializer.VALUE_DESERIALIZER_CLASS, JsonDeserializer.class);
+        config.put(JsonDeserializer.TRUSTED_PACKAGES, "*");
+        config.put(JsonDeserializer.VALUE_DEFAULT_TYPE, PasswordReset.class.getName());
+        config.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
+
+        return new DefaultKafkaConsumerFactory<>(
+                config,
+                new StringDeserializer(),
+                new JsonDeserializer<>(PasswordReset.class, false)
+        );
+    }
+
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, PasswordReset> passwordResetKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, PasswordReset> factory =
+                new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(passwordResetConsumerFactory());
         return factory;
     }
 }

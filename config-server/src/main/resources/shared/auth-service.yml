@@ -59,6 +59,7 @@ resilience4j:
 app:
   config:
     user-service-url: http://localhost:8222/internal/users
+    frontend-url: http://localhost:3000
   security:
     jwt:
       access-token-expiration: 86400000

@@ -1,9 +1,11 @@
 package com.dev.quikkkk.auth_service.controller;
 
+import com.dev.quikkkk.auth_service.dto.request.ForgotPasswordRequest;
 import com.dev.quikkkk.auth_service.dto.request.LoginRequest;
 import com.dev.quikkkk.auth_service.dto.request.RefreshTokenRequest;
 import com.dev.quikkkk.auth_service.dto.request.RegistrationRequest;
 import com.dev.quikkkk.auth_service.dto.request.ResendVerificationRequest;
+import com.dev.quikkkk.auth_service.dto.request.ResetPasswordRequest;
 import com.dev.quikkkk.auth_service.dto.request.VerifyEmailRequest;
 import com.dev.quikkkk.auth_service.dto.response.ApiResponse;
 import com.dev.quikkkk.auth_service.dto.response.AuthenticationResponse;
@@ -70,6 +72,22 @@ public class AuthenticationController {
             return ResponseEntity.badRequest().body(ApiResponse.error("Authorization header is missing or invalid"));
         String token = authHeader.substring(7);
         authenticationService.logout(token);
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authenticationService.forgotPassword(request.getEmail());
+        return ResponseEntity.ok(ApiResponse.success(null));
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        if (!request.getNewPassword().equals(request.getConfirmPassword())) {
+            return ResponseEntity.badRequest().body(ApiResponse.error("Passwords do not match"));
+        }
+
+        authenticationService.resetPassword(request.getToken(), request.getNewPassword());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
 

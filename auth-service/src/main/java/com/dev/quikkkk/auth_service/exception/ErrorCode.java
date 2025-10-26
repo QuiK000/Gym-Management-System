@@ -27,7 +27,9 @@ public enum ErrorCode {
     EMAIL_ALREADY_VERIFIED("EMAIL_ALREADY_VERIFIED", "Email already verified", HttpStatus.BAD_REQUEST),
     TOKEN_REVOKED("TOKEN_REVOKED", "Token has been revoked", HttpStatus.UNAUTHORIZED),
     INVALID_TOKEN("INVALID_TOKEN", "Invalid or expired token", HttpStatus.UNAUTHORIZED),
-    TOKEN_EXPIRED("TOKEN_EXPIRED", "Token has expired", HttpStatus.UNAUTHORIZED);
+    TOKEN_EXPIRED("TOKEN_EXPIRED", "Token has expired", HttpStatus.UNAUTHORIZED),
+    PASSWORD_RESET_TOKEN_INVALID("PASSWORD_RESET_TOKEN_INVALID", "Invalid or expired password reset token", HttpStatus.BAD_REQUEST),
+    PASSWORD_RESET_TOKEN_USED("PASSWORD_RESET_TOKEN_USED", "Password reset token already used", HttpStatus.BAD_REQUEST);
 
     private final String code;
     private final String defaultMessage;
