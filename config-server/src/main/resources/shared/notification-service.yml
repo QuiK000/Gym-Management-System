@@ -27,7 +27,7 @@ spring:
         spring:
           json:
             type:
-              mapping: "com.dev.quikkkk.auth_service.dto.kafka.CodeConfirmation"
+              mapping: "codeConfirmation:com.dev.quikkkk.notification_service.dto.CodeConfirmation"
             trusted:
               packages: '*'
   mail:
