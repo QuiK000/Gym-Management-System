@@ -19,6 +19,7 @@ import org.thymeleaf.spring6.SpringTemplateEngine;
 import java.util.Map;
 
 import static com.dev.quikkkk.notification_service.dto.EmailTemplate.CODE_CONFIRMATION;
+import static com.dev.quikkkk.notification_service.dto.EmailTemplate.PASSWORD_RESET;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.springframework.mail.javamail.MimeMessageHelper.MULTIPART_MODE_MIXED_RELATED;
 
@@ -40,6 +41,19 @@ public class EmailServiceImpl implements IEmailService {
         sendTemplatedEmail(destinationEmail, CODE_CONFIRMATION, Map.of(
                 "code", code,
                 "expiryMinutes", 15,
+                "supportEmail", fromEmail
+        ));
+    }
+
+    @Override
+    @Async
+    @Retryable(backoff = @Backoff(delay = 2000, multiplier = 2))
+    public void sendPasswordResetEmail(String destinationEmail, String resetLink) throws MessagingException {
+        log.info("Sending password reset email to {}", destinationEmail);
+        sendTemplatedEmail(destinationEmail, PASSWORD_RESET, Map.of(
+                "email", destinationEmail,
+                "resetLink", resetLink,
+                "expiryMinutes", 60,
                 "supportEmail", fromEmail
         ));
     }
