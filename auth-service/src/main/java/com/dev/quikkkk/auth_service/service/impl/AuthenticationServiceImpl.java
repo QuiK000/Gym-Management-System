@@ -73,10 +73,8 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
             );
 
             bruteForceProtectionService.registerSuccessfulAttempt(clientIp);
-
             CompletableFuture<String> accessTokenFuture = CompletableFuture.supplyAsync(
                     () -> jwtService.generateAccessToken(userCredentials));
-
             CompletableFuture<String> refreshTokenFuture = CompletableFuture.supplyAsync(
                     () -> jwtService.generateRefreshToken(userCredentials));
 
