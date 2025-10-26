@@ -24,7 +24,10 @@ public enum ErrorCode {
     INVALID_VERIFICATION_CODE("INVALID_VERIFICATION_CODE", "Invalid verification code", HttpStatus.BAD_REQUEST),
     VERIFICATION_CODE_EXPIRED("VERIFICATION_CODE_EXPIRED", "Verification code expired", HttpStatus.BAD_REQUEST),
     MAX_VERIFICATION_ATTEMPTS_EXCEEDED("MAX_VERIFICATION_ATTEMPTS_EXCEEDED", "Maximum verification attempts exceeded", HttpStatus.TOO_MANY_REQUESTS),
-    EMAIL_ALREADY_VERIFIED("EMAIL_ALREADY_VERIFIED", "Email already verified", HttpStatus.BAD_REQUEST);
+    EMAIL_ALREADY_VERIFIED("EMAIL_ALREADY_VERIFIED", "Email already verified", HttpStatus.BAD_REQUEST),
+    TOKEN_REVOKED("TOKEN_REVOKED", "Token has been revoked", HttpStatus.UNAUTHORIZED),
+    INVALID_TOKEN("INVALID_TOKEN", "Invalid or expired token", HttpStatus.UNAUTHORIZED),
+    TOKEN_EXPIRED("TOKEN_EXPIRED", "Token has expired", HttpStatus.UNAUTHORIZED);
 
     private final String code;
     private final String defaultMessage;

@@ -109,6 +109,11 @@ public class JwtServiceImpl implements IJwtService {
     }
 
     @Override
+    public Date extractExpiration(String token) {
+        return getCachedClaims(token).getExpiration();
+    }
+
+    @Override
     public boolean isTokenValid(String token, String expectedEmail) {
         String email = extractEmail(token);
         return email.equals(expectedEmail) && !isTokenExpired(token);

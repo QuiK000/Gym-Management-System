@@ -1,5 +1,6 @@
 package com.dev.quikkkk.auth_service.config;
 
+import com.dev.quikkkk.auth_service.security.BruteForceProtectionFilter;
 import com.dev.quikkkk.auth_service.security.JwtFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -40,6 +41,7 @@ public class SecurityConfig {
     };
 
     private final JwtFilter jwtFilter;
+    private final BruteForceProtectionFilter bruteForceProtectionFilter;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
@@ -52,6 +54,7 @@ public class SecurityConfig {
                                 .authenticated())
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(STATELESS))
+                .addFilterBefore(bruteForceProtectionFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

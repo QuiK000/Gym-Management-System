@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor
@@ -78,5 +80,17 @@ public class AuthenticationController {
     ) {
         boolean isVerified = emailVerificationService.isEmailRecentlyVerified(email);
         return ResponseEntity.ok(ApiResponse.success(isVerified));
+    }
+
+    @GetMapping("/validate-token")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> validateToken(HttpServletRequest request) {
+        String authHeader = request.getHeader("Authorization");
+        if (authHeader == null || !authHeader.startsWith("Bearer "))
+            return ResponseEntity.badRequest().body(ApiResponse.error("No token provided"));
+
+        String token = authHeader.substring(7);
+        Map<String, Object> validationResult = authenticationService.validateToken(token);
+
+        return ResponseEntity.ok(ApiResponse.success(validationResult));
     }
 }

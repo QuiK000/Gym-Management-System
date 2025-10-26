@@ -1,5 +1,6 @@
 package com.dev.quikkkk.auth_service.service.impl;
 
+import com.dev.quikkkk.auth_service.dto.kafka.UserRegisteredEvent;
 import com.dev.quikkkk.auth_service.dto.request.LoginRequest;
 import com.dev.quikkkk.auth_service.dto.request.RefreshTokenRequest;
 import com.dev.quikkkk.auth_service.dto.request.RegistrationRequest;
@@ -20,18 +21,25 @@ import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.EMAIL_ALREADY_EXISTS;
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.INTERNAL_SERVER_ERROR;
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.INVALID_CREDENTIALS;
+import static com.dev.quikkkk.auth_service.exception.ErrorCode.INVALID_TOKEN;
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.PASSWORD_MISMATCH;
+import static com.dev.quikkkk.auth_service.exception.ErrorCode.TOKEN_REVOKED;
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.TOO_MANY_ATTEMPTS;
 import static com.dev.quikkkk.auth_service.exception.ErrorCode.USER_NOT_FOUND;
 
@@ -49,6 +57,7 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
     private final ITokenBlackListService tokenBlackListService;
     private final UserMapper mapper;
     private final AuthenticationManager authenticationManager;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
     @Override
     public AuthenticationResponse login(LoginRequest request) {
@@ -139,6 +148,16 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
         userRepository.save(userCredentials);
         log.info("User {} registered", userCredentials.getEmail());
 
+        UserRegisteredEvent event = UserRegisteredEvent.builder()
+                .userId(userCredentials.getId())
+                .email(userCredentials.getEmail())
+                .role(defaultRole.getName())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        kafkaTemplate.send("user-registered-topic", event);
+        log.info("User registered event sent for user: {}", userCredentials.getId());
+
         String ipAddress = NetworkUtils.getClientIp().orElseThrow(() -> new BusinessException(INTERNAL_SERVER_ERROR));
         emailVerificationService.sendVerificationCode(
                 userCredentials.getId(),
@@ -158,6 +177,43 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
     }
 
     @Override
+    public Map<String, Object> validateToken(String token) {
+        log.info("Validating token: {}", token);
+
+        if (tokenBlackListService.isTokenBlacklisted(token)) {
+            log.warn("Token validation failed: Token is blacklisted");
+            throw new BusinessException(TOKEN_REVOKED);
+        }
+
+        try {
+            String email = jwtService.extractEmail(token);
+            String userId = jwtService.extractUserId(token);
+            List<String> roles = jwtService.extractRoles(token);
+
+            if (!jwtService.isTokenValid(token, email)) {
+                log.warn("Token validation failed: Token is invalid or expired");
+                throw new BusinessException(INVALID_TOKEN);
+            }
+
+            Map<String, Object> result = new HashMap<>();
+
+            result.put("valid", true);
+            result.put("userId", userId);
+            result.put("email", email);
+            result.put("roles", roles);
+            result.put("tokenType", extractTokenType(token));
+
+            log.info("Token validation successful for user: {}", userId);
+            return result;
+        } catch (BusinessException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Token validation failed with exception: {}", e.getMessage());
+            throw new BusinessException(INVALID_TOKEN);
+        }
+    }
+
+    @Override
     public UserCredentials findUserByEmail(String email) {
         return userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
@@ -170,5 +226,13 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
 
     private void checkPasswords(String password, String confirmPassword) {
         if (password == null || !password.equals(confirmPassword)) throw new BusinessException(PASSWORD_MISMATCH);
+    }
+
+    private String extractTokenType(String token) {
+        try {
+            return "ACCESS_TOKEN";
+        } catch (Exception e) {
+            return "UNKNOWN";
+        }
     }
 }

@@ -2,6 +2,7 @@ package com.dev.quikkkk.auth_service.service;
 
 import com.dev.quikkkk.auth_service.entity.UserCredentials;
 
+import java.util.Date;
 import java.util.List;
 
 public interface IJwtService {
@@ -16,6 +17,8 @@ public interface IJwtService {
     String extractUserId(String token);
 
     List<String> extractRoles(String token);
+
+    Date extractExpiration(String token);
 
     boolean isTokenValid(String token, String expectedEmail);
 }
