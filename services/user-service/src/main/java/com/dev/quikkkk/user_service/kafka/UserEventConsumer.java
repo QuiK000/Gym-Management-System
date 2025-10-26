@@ -3,20 +3,16 @@ package com.dev.quikkkk.user_service.kafka;
 import com.dev.quikkkk.user_service.dto.kafka.UserRegisteredEvent;
 import com.dev.quikkkk.user_service.entity.UserProfile;
 import com.dev.quikkkk.user_service.repository.IUserProfileRepository;
-import jakarta.persistence.EntityManager;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Service;
 
-import java.util.UUID;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class UserEventConsumer {
-    private final EntityManager entityManager;
     private final IUserProfileRepository repository;
 
     @KafkaListener(
@@ -36,9 +32,10 @@ public class UserEventConsumer {
 
             UserProfile profile = UserProfile.builder()
                     .id(event.getUserId())
-                    .firstName("User")
-                    .lastName(UUID.randomUUID().toString())
+                    .firstName(event.getFirstName())
+                    .lastName(event.getLastName())
                     .email(event.getEmail())
+                    .role(event.getRole())
                     .phone(null)
                     .dateOfBirth(null)
                     .gender(null)
@@ -47,6 +44,7 @@ public class UserEventConsumer {
                     .emergencyContactName(null)
                     .emergencyContactPhone(null)
                     .createdBy("SYSTEM")
+                    .createdDate(event.getTimestamp())
                     .build();
 
             repository.saveAndFlush(profile);

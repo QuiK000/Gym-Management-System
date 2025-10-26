@@ -175,6 +175,8 @@ public class AuthenticationServiceImpl implements IAuthenticationService {
 
         UserRegisteredEvent event = UserRegisteredEvent.builder()
                 .userId(userCredentials.getId())
+                .firstName(userCredentials.getFirstName())
+                .lastName(userCredentials.getLastName())
                 .email(userCredentials.getEmail())
                 .role(defaultRole.getName())
                 .timestamp(LocalDateTime.now())

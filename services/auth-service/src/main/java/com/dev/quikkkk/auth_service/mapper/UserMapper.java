@@ -15,6 +15,8 @@ public class UserMapper {
 
     public UserCredentials toUser(RegistrationRequest request) {
         return UserCredentials.builder()
+                .firstName(request.getFirstName())
+                .lastName(request.getLastName())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .enabled(true)

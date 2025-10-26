@@ -30,6 +30,24 @@ public class RegistrationRequest {
     private String email;
 
     @Schema(
+            description = "User first name",
+            example = "Volodymyr",
+            maxLength = 50
+    )
+    @NotBlank(message = "VALIDATION.REGISTRATION.FIRST_NAME.NOT_BLANK")
+    @Size(max = 50, message = "VALIDATION.REGISTRATION.FIRST_NAME.SIZE")
+    private String firstName;
+
+    @Schema(
+            description = "User last name",
+            example = "Last name",
+            maxLength = 50
+    )
+    @NotBlank(message = "VALIDATION.REGISTRATION.LAST_NAME.NOT_BLANK")
+    @Size(max = 50, message = "VALIDATION.REGISTRATION.LAST_NAME.SIZE")
+    private String lastName;
+
+    @Schema(
             description = "User password. Must contain at least one uppercase letter, one lowercase letter, one digit, and one special character",
             example = "SecurePass123!",
             minLength = 8,

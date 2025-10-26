@@ -34,6 +34,9 @@ public class UserProfile extends BaseEntity {
     @Email(message = "VALIDATION.USER.EMAIL.FORMAT")
     private String email;
 
+    @Column(name = "role", nullable = false)
+    private String role;
+
     @Column(name = "phone")
     private String phone;
 
