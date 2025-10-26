@@ -1,5 +1,6 @@
 package com.dev.quikkkk.auth_service.dto.request;
 
+import com.dev.quikkkk.auth_service.validation.NonDisposableEmail;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -25,6 +26,7 @@ public class RegistrationRequest {
     @NotBlank(message = "VALIDATION.REGISTRATION.EMAIL.NOT_BLANK")
     @Size(max = 50, message = "VALIDATION.REGISTRATION.EMAIL.SIZE")
     @Pattern(regexp = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$", message = "VALIDATION.REGISTRATION.EMAIL.INVALID")
+    @NonDisposableEmail(message = "VALIDATION.REGISTRATION.EMAIL.DISPOSABLE")
     private String email;
 
     @Schema(
