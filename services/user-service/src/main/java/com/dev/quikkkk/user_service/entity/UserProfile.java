@@ -3,6 +3,7 @@ package com.dev.quikkkk.user_service.entity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Email;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -25,13 +26,17 @@ public class UserProfile extends BaseEntity {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
-    @Column(name = "phone", nullable = false)
+    @Column(name = "email", nullable = false)
+    @Email(message = "VALIDATION.USER.EMAIL.FORMAT")
+    private String email;
+
+    @Column(name = "phone")
     private String phone;
 
-    @Column(name = "date_of_birth", nullable = false)
+    @Column(name = "date_of_birth")
     private LocalDateTime dateOfBirth;
 
-    @Column(name = "gender", nullable = false)
+    @Column(name = "gender")
     private GenderType gender;
 
     @Column(name = "avatar_url")
