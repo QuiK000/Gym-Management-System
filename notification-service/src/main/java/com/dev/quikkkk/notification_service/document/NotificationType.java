@@ -1,5 +1,6 @@
 package com.dev.quikkkk.notification_service.document;
 
 public enum NotificationType {
-    SEND_EMAIL_VERIFICATION
+    SEND_EMAIL_VERIFICATION,
+    PASSWORD_RESET
 }

@@ -21,7 +21,5 @@ public class Notification {
     private String id;
     private NotificationType type;
     private LocalDateTime notificationDate;
-    private String code;
     private String email;
-    private String userId;
 }

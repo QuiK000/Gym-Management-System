@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 
+import static com.dev.quikkkk.notification_service.document.NotificationType.PASSWORD_RESET;
 import static com.dev.quikkkk.notification_service.document.NotificationType.SEND_EMAIL_VERIFICATION;
 
 @Service
@@ -33,8 +34,6 @@ public class NotificationConsumer {
             repository.save(
                     Notification.builder()
                             .type(SEND_EMAIL_VERIFICATION)
-                            .userId(notification.userId())
-                            .code(notification.code())
                             .email(notification.email())
                             .notificationDate(LocalDateTime.now())
                             .build()
@@ -57,9 +56,17 @@ public class NotificationConsumer {
             groupId = "notification-service",
             containerFactory = "passwordResetKafkaListenerContainerFactory"
     )
-    public void consumePasswordResetEmail(PasswordReset event) throws MessagingException {
+    public void consumePasswordResetEmail(PasswordReset event) {
         log.info("Received password reset notification: {}", event.email());
         try {
+            repository.save(
+                    Notification.builder()
+                            .type(PASSWORD_RESET)
+                            .email(event.email())
+                            .notificationDate(LocalDateTime.now())
+                            .build()
+            );
+
             service.sendPasswordResetEmail(event.email(), event.resetLink());
             log.info("Password reset notification sent successfully to: {}", event.email());
         } catch (Exception e) {
