@@ -30,6 +30,12 @@ spring:
       value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
       properties:
         spring.json.trusted.packages: "*"
+  servlet:
+    multipart:
+      enabled: true
+      max-size-size: 5MB
+      max-request-size: 5MB
+      file-size-threshold: 2MB
 
 eureka:
   instance:
@@ -41,6 +47,18 @@ eureka:
 app:
   config:
     auth-service-url: http://localhost:8222/internal/auth
+  storage:
+    type: local
+    local:
+      upload-dir: ./uploads/avatar
+      base-url: http://localhost:8070
+  avatar:
+    allowed-extensions: jpg,jpeg,png,gif,webp
+    max-size: 5242880
+    min-width: 100
+    max-width: 2000
+    min-height: 100
+    max-height: 2000
 
 springdoc:
   api-docs:
