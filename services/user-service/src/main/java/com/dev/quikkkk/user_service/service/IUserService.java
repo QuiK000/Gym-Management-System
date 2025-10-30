@@ -12,4 +12,6 @@ public interface IUserService {
     UserProfileResponse getUserById(String userId);
 
     String uploadAvatar(String userId, MultipartFile file);
+
+    void deleteAvatar(String userId);
 }

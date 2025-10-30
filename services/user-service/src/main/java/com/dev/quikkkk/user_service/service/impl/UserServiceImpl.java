@@ -2,6 +2,7 @@ package com.dev.quikkkk.user_service.service.impl;
 
 import com.dev.quikkkk.user_service.dto.request.UpdateUserProfileRequest;
 import com.dev.quikkkk.user_service.dto.response.UserProfileResponse;
+import com.dev.quikkkk.user_service.entity.User;
 import com.dev.quikkkk.user_service.exception.BusinessException;
 import com.dev.quikkkk.user_service.mapper.UserMapper;
 import com.dev.quikkkk.user_service.repository.IUserRepository;
@@ -35,7 +36,7 @@ public class UserServiceImpl implements IUserService {
     @Transactional
     @CacheEvict(value = "users", key = "#userId")
     public UserProfileResponse updateUserProfile(String userId, UpdateUserProfileRequest request) {
-        var user = repository.findById(userId).orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
+        var user = findUserById(userId);
         mapper.mergeUser(user, request);
         var updatedUser = repository.save(user);
 
@@ -57,7 +58,7 @@ public class UserServiceImpl implements IUserService {
     @CacheEvict(value = "users", key = "#userId")
     public String uploadAvatar(String userId, MultipartFile file) {
         log.info("Uploading avatar for user: {}", userId);
-        var user = repository.findById(userId).orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
+        var user = findUserById(userId);
 
         if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
             log.info("Deleting old avatar: {}", user.getAvatarUrl());
@@ -70,5 +71,27 @@ public class UserServiceImpl implements IUserService {
 
         log.info("Avatar uploaded successfully for user: {}. URL: {}", userId, avatarUrl);
         return avatarUrl;
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "users", key = "#userId")
+    public void deleteAvatar(String userId) {
+        log.info("Deleting avatar for user: {}", userId);
+        var user = findUserById(userId);
+
+        if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
+            fileStorageService.deleteFile(user.getAvatarUrl());
+            user.setAvatarUrl(null);
+
+            repository.save(user);
+            log.info("Avatar deleted successfully for user: {}", userId);
+        } else {
+            log.info("User {} has no avatar to delete", userId);
+        }
+    }
+
+    private User findUserById(String userId) {
+        return repository.findById(userId).orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
     }
 }
