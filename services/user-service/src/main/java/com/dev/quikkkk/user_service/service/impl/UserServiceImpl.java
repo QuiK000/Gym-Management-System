@@ -21,10 +21,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     public UserProfileResponse getProfileCurrentUser(String userId) {
-        log.info("Getting profile for current user");
-        return repository.findById(userId)
-                .map(mapper::toUserProfile)
-                .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
+        return getUserById(userId);
     }
 
     @Override
@@ -34,5 +31,13 @@ public class UserServiceImpl implements IUserService {
         var updatedUser = repository.save(user);
 
         return mapper.toUserProfile(updatedUser);
+    }
+
+    @Override
+    public UserProfileResponse getUserById(String userId) {
+        log.info("Getting profile for user: {}", userId);
+        return repository.findById(userId)
+                .map(mapper::toUserProfile)
+                .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
     }
 }
