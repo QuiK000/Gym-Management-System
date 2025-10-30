@@ -8,8 +8,10 @@ import com.dev.quikkkk.user_service.service.IUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -26,6 +28,15 @@ public class UserController {
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         UserProfileResponse user = service.getProfileCurrentUser(principal.id());
+        return ResponseEntity.ok(ApiResponse.success(user));
+    }
+
+    @GetMapping("/{user-id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> getUserById(
+            @PathVariable("user-id") String userId
+    ) {
+        UserProfileResponse user = service.getUserById(userId);
         return ResponseEntity.ok(ApiResponse.success(user));
     }
 
