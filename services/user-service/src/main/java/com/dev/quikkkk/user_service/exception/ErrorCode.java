@@ -29,7 +29,13 @@ public enum ErrorCode {
     INVALID_TOKEN("INVALID_TOKEN", "Invalid or expired token", HttpStatus.UNAUTHORIZED),
     TOKEN_EXPIRED("TOKEN_EXPIRED", "Token has expired", HttpStatus.UNAUTHORIZED),
     PASSWORD_RESET_TOKEN_INVALID("PASSWORD_RESET_TOKEN_INVALID", "Invalid or expired password reset token", HttpStatus.BAD_REQUEST),
-    PASSWORD_RESET_TOKEN_USED("PASSWORD_RESET_TOKEN_USED", "Password reset token already used", HttpStatus.BAD_REQUEST);
+    PASSWORD_RESET_TOKEN_USED("PASSWORD_RESET_TOKEN_USED", "Password reset token already used", HttpStatus.BAD_REQUEST),
+    INVALID_FILE_FORMAT("INVALID_FILE_FORMAT", "Invalid file format", HttpStatus.BAD_REQUEST),
+    FILE_UPLOAD_ERROR("FILE_UPLOAD_ERROR", "Failed to upload file", HttpStatus.INTERNAL_SERVER_ERROR),
+    FILE_SIZE_EXCEEDED("FILE_SIZE_EXCEEDED", "File size exceeds maximum allowed size of 5MB", HttpStatus.BAD_REQUEST),
+    INVALID_FILE_EXTENSION("INVALID_FILE_EXTENSION", "Invalid file extension. Allowed: jpg, jpeg, png, gif, webp", HttpStatus.BAD_REQUEST),
+    INVALID_IMAGE_FILE("INVALID_IMAGE_FILE", "File is not a valid image", HttpStatus.BAD_REQUEST),
+    INVALID_IMAGE_DIMENSIONS("INVALID_IMAGE_DIMENSIONS", "Image dimensions must be between 100x100 and 2000x2000 pixels", HttpStatus.BAD_REQUEST);
 
     private final String code;
     private final String defaultMessage;
