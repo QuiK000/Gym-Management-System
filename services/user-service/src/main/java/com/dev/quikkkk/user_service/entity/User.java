@@ -22,7 +22,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class UserProfile extends BaseEntity {
+public class User extends BaseEntity {
     @Id
     private String id;
 

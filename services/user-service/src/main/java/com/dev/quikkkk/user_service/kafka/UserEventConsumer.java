@@ -1,8 +1,8 @@
 package com.dev.quikkkk.user_service.kafka;
 
 import com.dev.quikkkk.user_service.dto.kafka.UserRegisteredEvent;
-import com.dev.quikkkk.user_service.entity.UserProfile;
-import com.dev.quikkkk.user_service.repository.IUserProfileRepository;
+import com.dev.quikkkk.user_service.entity.User;
+import com.dev.quikkkk.user_service.repository.IUserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class UserEventConsumer {
-    private final IUserProfileRepository repository;
+    private final IUserRepository repository;
 
     @KafkaListener(
             topics = "user-registered-topic",
@@ -30,7 +30,7 @@ public class UserEventConsumer {
                 return;
             }
 
-            UserProfile profile = UserProfile.builder()
+            User profile = User.builder()
                     .id(event.getUserId())
                     .firstName(event.getFirstName())
                     .lastName(event.getLastName())
