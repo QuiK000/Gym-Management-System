@@ -48,7 +48,7 @@ public class UserController {
     }
 
     @GetMapping("/{user-id}")
-    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN') || hasRole('ROLE_TRAINER')")
     public ResponseEntity<ApiResponse<UserProfileResponse>> getUserById(
             @PathVariable("user-id") String userId
     ) {
