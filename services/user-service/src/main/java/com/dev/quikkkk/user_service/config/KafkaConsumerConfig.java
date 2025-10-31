@@ -59,19 +59,8 @@ public class KafkaConsumerConfig {
         config.put(JsonDeserializer.USE_TYPE_INFO_HEADERS, false);
         config.put(JsonDeserializer.REMOVE_TYPE_INFO_HEADERS, false);
 
-        JsonDeserializer<UserRegisteredEvent> jsonDeserializer;
-        try (JsonDeserializer<UserRegisteredEvent> tempDeserializer =
-                     new JsonDeserializer<>(UserRegisteredEvent.class, kafkaObjectMapper())) {
-
-            tempDeserializer.addTrustedPackages("*");
-            tempDeserializer.setRemoveTypeHeaders(false);
-            tempDeserializer.setUseTypeHeaders(false);
-
-            jsonDeserializer = new JsonDeserializer<>(UserRegisteredEvent.class, kafkaObjectMapper());
-            jsonDeserializer.addTrustedPackages("*");
-            jsonDeserializer.setRemoveTypeHeaders(false);
-            jsonDeserializer.setUseTypeHeaders(false);
-        }
+        JsonDeserializer<UserRegisteredEvent> jsonDeserializer =
+                new JsonDeserializer<>(UserRegisteredEvent.class, kafkaObjectMapper());
 
         return new DefaultKafkaConsumerFactory<>(
                 config,
