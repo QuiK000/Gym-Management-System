@@ -9,10 +9,15 @@ import com.dev.quikkkk.user_service.repository.IUserRepository;
 import com.dev.quikkkk.user_service.service.IFileStorageService;
 import com.dev.quikkkk.user_service.service.IUserService;
 import jakarta.transaction.Transactional;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,6 +30,7 @@ public class UserServiceImpl implements IUserService {
     private final IUserRepository repository;
     private final IFileStorageService fileStorageService;
     private final UserMapper mapper;
+    private final PagedResourcesAssembler<UserProfileResponse> pagedResourcesAssembler;
 
     @Override
     @Cacheable(value = "users", key = "#userId")
@@ -51,6 +57,16 @@ public class UserServiceImpl implements IUserService {
         return repository.findById(userId)
                 .map(mapper::toUserProfile)
                 .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
+    }
+
+    @Override
+    public PagedModel<UserProfileResponse> getAllUsers(int page, int size, String role, String search) {
+        Pageable pageable = Pageable.ofSize(size).withPage(page);
+
+        Page<User> users = repository.findAllWithFilters(role, search, pageable);
+        Page<UserProfileResponse> responsePage = users.map(mapper::toUserProfile);
+
+        return pagedResourcesAssembler.toModel(responsePage);
     }
 
     @Override
