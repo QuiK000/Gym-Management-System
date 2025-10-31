@@ -2,5 +2,6 @@
 <project version="4">
   <component name="DataSourcePerFileMappings">
     <file url="file://$APPLICATION_CONFIG_DIR$/consoles/db/117b97cc-63a3-424d-939a-bcb34fcce211/console.sql" value="117b97cc-63a3-424d-939a-bcb34fcce211" />
+    <file url="file://$PROJECT_DIR$/services/user-service/src/main/java/com/dev/quikkkk/user_service/repository/IUserRepository.java" value="117b97cc-63a3-424d-939a-bcb34fcce211" />
   </component>
 </project>
