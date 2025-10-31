@@ -7,10 +7,10 @@ import com.dev.quikkkk.user_service.dto.response.UserProfileResponse;
 import com.dev.quikkkk.user_service.security.UserPrincipal;
 import com.dev.quikkkk.user_service.service.IUserService;
 import jakarta.validation.Valid;
-import lombok.NonNull;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
+import org.springframework.data.domain.Page;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -34,7 +34,7 @@ public class UserController {
 
     @PostMapping(value = "/profile/avatar", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<AvatarUploadResponse>> uploadAvatar(
-            @RequestParam("file")MultipartFile file,
+            @RequestParam("file") MultipartFile file,
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         String avatarUrl = service.uploadAvatar(principal.id(), file);
@@ -61,13 +61,13 @@ public class UserController {
 
     @GetMapping
     @PreAuthorize("hasRole('ROLE_ADMIN')")
-    public ResponseEntity<ApiResponse<PagedModel<@NonNull EntityModel<@NonNull UserProfileResponse>>>> getAllUsers(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "20") int size,
+    public ResponseEntity<ApiResponse<Page<UserProfileResponse>>> getAllUsers(
+            @RequestParam(defaultValue = "0") @Min(0) int page,
+            @RequestParam(defaultValue = "20") @Min(2) @Max(100) int size,
             @RequestParam(required = false) String role,
             @RequestParam(required = false) String search
     ) {
-        PagedModel<@NonNull EntityModel<@NonNull UserProfileResponse>> users = service.getAllUsers(page, size, role, search);
+        Page<UserProfileResponse> users = service.getAllUsers(page, size, role, search);
         return ResponseEntity.ok(ApiResponse.success(users));
     }
 

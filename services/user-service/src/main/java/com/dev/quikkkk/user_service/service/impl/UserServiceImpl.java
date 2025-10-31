@@ -9,7 +9,6 @@ import com.dev.quikkkk.user_service.repository.IUserRepository;
 import com.dev.quikkkk.user_service.service.IFileStorageService;
 import com.dev.quikkkk.user_service.service.IUserService;
 import jakarta.transaction.Transactional;
-import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
@@ -18,12 +17,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PagedResourcesAssembler;
-import org.springframework.hateoas.EntityModel;
-import org.springframework.hateoas.PagedModel;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import static com.dev.quikkkk.user_service.exception.ErrorCode.EMAIL_ALREADY_EXISTS;
+import static com.dev.quikkkk.user_service.exception.ErrorCode.FILE_UPLOAD_ERROR;
 import static com.dev.quikkkk.user_service.exception.ErrorCode.USER_NOT_FOUND;
 
 @Service
@@ -33,11 +31,11 @@ public class UserServiceImpl implements IUserService {
     private final IUserRepository repository;
     private final IFileStorageService fileStorageService;
     private final UserMapper mapper;
-    private final PagedResourcesAssembler<UserProfileResponse> pagedResourcesAssembler;
 
     @Override
-    @Cacheable(value = "users", key = "#userId")
+    @Cacheable(value = "users", key = "#userId", unless = "#result == null")
     public UserProfileResponse getProfileCurrentUser(String userId) {
+        log.debug("Getting profile for user: {}", userId);
         return getUserById(userId);
     }
 
@@ -46,6 +44,12 @@ public class UserServiceImpl implements IUserService {
     @CacheEvict(value = "users", key = "#userId")
     public UserProfileResponse updateUserProfile(String userId, UpdateUserProfileRequest request) {
         var user = findUserById(userId);
+        if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
+            if (repository.existsByEmail(request.getEmail())) {
+                throw new BusinessException(EMAIL_ALREADY_EXISTS);
+            }
+        }
+
         mapper.mergeUser(user, request);
         var updatedUser = repository.save(user);
 
@@ -54,7 +58,7 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    @Cacheable(value = "users", key = "#userId")
+    @Cacheable(value = "users", key = "#userId", unless = "#result == null")
     public UserProfileResponse getUserById(String userId) {
         log.info("Getting profile for user: {}", userId);
         return repository.findById(userId)
@@ -63,25 +67,26 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public PagedModel<@NonNull EntityModel<@NonNull UserProfileResponse>> getAllUsers(
-            int page,
-            int size,
-            String role,
-            String search
-    ) {
-        log.info("Getting all users with filters: role={}, search={}", role, search);
+    public Page<UserProfileResponse> getAllUsers(int page, int size, String role, String search) {
+        log.info("Getting all users. Page: {}, Size: {}, Role: {}, Search: {}", page, size, role, search);
+
+        if (page < 0) page = 0;
+        if (size <= 0) size = 20;
+        if (size > 100) size = 100;
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
         Page<User> users = repository.findAllWithFilters(role, search, pageable);
         Page<UserProfileResponse> responsePage = users.map(mapper::toUserProfile);
 
-        log.info("Found {} users, total pages: {}, total elements: {}",
+        log.info(
+                "Retrieved {} users out of {} total, page {}/{}",
                 responsePage.getNumberOfElements(),
-                responsePage.getTotalPages(),
-                responsePage.getTotalElements()
+                responsePage.getTotalElements(),
+                responsePage.getNumber() + 1,
+                responsePage.getTotalPages()
         );
 
-        return pagedResourcesAssembler.toModel(responsePage);
+        return responsePage;
     }
 
     @Override
@@ -92,15 +97,19 @@ public class UserServiceImpl implements IUserService {
         var user = findUserById(userId);
 
         if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
-            log.info("Deleting old avatar: {}", user.getAvatarUrl());
-            fileStorageService.deleteFile(user.getAvatarUrl());
+            log.debug("Deleting old avatar: {}", user.getAvatarUrl());
+            try {
+                fileStorageService.deleteFile(user.getAvatarUrl());
+            } catch (Exception e) {
+                log.error("Failed to delete old avatar: {}", user.getAvatarUrl(), e);
+            }
         }
 
         String avatarUrl = fileStorageService.uploadFile(file, userId);
         user.setAvatarUrl(avatarUrl);
         repository.save(user);
 
-        log.info("Avatar uploaded successfully for user: {}. URL: {}", userId, avatarUrl);
+        log.info("Avatar uploaded successfully for user: {}", userId);
         return avatarUrl;
     }
 
@@ -112,11 +121,18 @@ public class UserServiceImpl implements IUserService {
         var user = findUserById(userId);
 
         if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
-            fileStorageService.deleteFile(user.getAvatarUrl());
-            user.setAvatarUrl(null);
+            String avatarUrl = user.getAvatarUrl();
 
-            repository.save(user);
-            log.info("Avatar deleted successfully for user: {}", userId);
+            try {
+                fileStorageService.deleteFile(avatarUrl);
+                user.setAvatarUrl(null);
+
+                repository.save(user);
+                log.info("Avatar deleted successfully for user: {}", userId);
+            } catch (Exception e) {
+                log.error("Failed to delete avatar: {}", avatarUrl, e);
+                throw new BusinessException(FILE_UPLOAD_ERROR);
+            }
         } else {
             log.info("User {} has no avatar to delete", userId);
         }

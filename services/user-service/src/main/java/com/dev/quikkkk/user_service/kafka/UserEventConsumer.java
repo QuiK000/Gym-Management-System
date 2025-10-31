@@ -7,6 +7,10 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
+import org.springframework.kafka.support.Acknowledgment;
+import org.springframework.kafka.support.KafkaHeaders;
+import org.springframework.messaging.handler.annotation.Header;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -21,12 +25,25 @@ public class UserEventConsumer {
             containerFactory = "userRegisteredKafkaListenerContainerFactory"
     )
     @Transactional
-    public void consumeUserRegisteredEvent(UserRegisteredEvent event) {
-        log.info("Received user registration event for USER_ID: {}, email: {}", event.getUserId(), event.getEmail());
+    public void consumeUserRegisteredEvent(
+            @Payload UserRegisteredEvent event,
+            @Header(KafkaHeaders.RECEIVED_TOPIC) String topic,
+            @Header(KafkaHeaders.RECEIVED_PARTITION) int partition,
+            @Header(KafkaHeaders.OFFSET) long offset,
+            Acknowledgment acknowledgment
+    ) {
+        log.info(
+                "Received user registration event from topic: {}, partition: {}, offset: {}, USER_ID: {}, email: {}",
+                topic, partition, offset, event.getUserId(), event.getEmail()
+        );
 
         try {
             if (repository.existsById(event.getUserId())) {
                 log.warn("User profile already exists for USER_ID: {}", event.getUserId());
+                if (acknowledgment != null) {
+                    acknowledgment.acknowledge();
+                }
+
                 return;
             }
 
@@ -48,6 +65,7 @@ public class UserEventConsumer {
                     .build();
 
             repository.saveAndFlush(profile);
+            if (acknowledgment != null) acknowledgment.acknowledge();
             log.info("User profile created successfully for USER_ID: {}", profile.getId());
         } catch (Exception e) {
             log.error("Failed to create user profile for USER_ID: {}", event.getUserId(), e);
