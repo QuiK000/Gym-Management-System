@@ -15,8 +15,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -60,11 +63,23 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
-    public PagedModel<UserProfileResponse> getAllUsers(int page, int size, String role, String search) {
-        Pageable pageable = Pageable.ofSize(size).withPage(page);
+    public PagedModel<@NonNull EntityModel<@NonNull UserProfileResponse>> getAllUsers(
+            int page,
+            int size,
+            String role,
+            String search
+    ) {
+        log.info("Getting all users with filters: role={}, search={}", role, search);
 
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdDate").descending());
         Page<User> users = repository.findAllWithFilters(role, search, pageable);
         Page<UserProfileResponse> responsePage = users.map(mapper::toUserProfile);
+
+        log.info("Found {} users, total pages: {}, total elements: {}",
+                responsePage.getNumberOfElements(),
+                responsePage.getTotalPages(),
+                responsePage.getTotalElements()
+        );
 
         return pagedResourcesAssembler.toModel(responsePage);
     }
