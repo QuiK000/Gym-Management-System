@@ -7,7 +7,10 @@ import com.dev.quikkkk.user_service.dto.response.UserProfileResponse;
 import com.dev.quikkkk.user_service.security.UserPrincipal;
 import com.dev.quikkkk.user_service.service.IUserService;
 import jakarta.validation.Valid;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.hateoas.EntityModel;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -54,6 +57,18 @@ public class UserController {
     ) {
         UserProfileResponse user = service.getUserById(userId);
         return ResponseEntity.ok(ApiResponse.success(user));
+    }
+
+    @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ApiResponse<PagedModel<@NonNull EntityModel<@NonNull UserProfileResponse>>>> getAllUsers(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(required = false) String role,
+            @RequestParam(required = false) String search
+    ) {
+        PagedModel<@NonNull EntityModel<@NonNull UserProfileResponse>> users = service.getAllUsers(page, size, role, search);
+        return ResponseEntity.ok(ApiResponse.success(users));
     }
 
     @PutMapping("/profile")
