@@ -46,7 +46,7 @@ eureka:
 
 app:
   config:
-    auth-service-url: http://localhost:8222/internal/auth
+    auth-service-url: http://localhost:8222/internal/users
   storage:
     type: local
     local:
