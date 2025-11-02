@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "auth-service", url = "{app.config.auth-service-url}")
+@FeignClient(name = "auth-service")
 public interface IAuthClient {
     @PutMapping("/internal/users/{user-id}/role")
     ApiResponse<RoleUpdatedResponse> updateUserRole(
