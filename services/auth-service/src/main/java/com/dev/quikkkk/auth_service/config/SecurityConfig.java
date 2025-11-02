@@ -28,6 +28,7 @@ public class SecurityConfig {
             "/api/v1/auth/resend-verification",
             "/api/v1/auth/forgot-password",
             "/api/v1/auth/reset-password",
+            "/internal/**",
             "/actuator/**",
             "/v2/api-docs",
             "/v3/api-docs",
