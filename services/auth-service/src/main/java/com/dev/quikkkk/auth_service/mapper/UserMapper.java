@@ -28,8 +28,4 @@ public class UserMapper {
                 .roles(new HashSet<>())
                 .build();
     }
-
-    public void updateRole(Role user, UpdateUserRoleRequest request) {
-        user.setName(request.getRole().toString());
-    }
 }
