@@ -1,6 +1,8 @@
 package com.dev.quikkkk.auth_service.mapper;
 
 import com.dev.quikkkk.auth_service.dto.request.RegistrationRequest;
+import com.dev.quikkkk.auth_service.dto.request.UpdateUserRoleRequest;
+import com.dev.quikkkk.auth_service.entity.Role;
 import com.dev.quikkkk.auth_service.entity.UserCredentials;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,5 +27,9 @@ public class UserMapper {
                 .emailVerified(false)
                 .roles(new HashSet<>())
                 .build();
+    }
+
+    public void updateRole(Role user, UpdateUserRoleRequest request) {
+        user.setName(request.getRole().toString());
     }
 }
