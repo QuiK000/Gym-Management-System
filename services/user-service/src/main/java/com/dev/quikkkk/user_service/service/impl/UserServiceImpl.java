@@ -1,7 +1,9 @@
 package com.dev.quikkkk.user_service.service.impl;
 
+import com.dev.quikkkk.user_service.client.IAuthClient;
 import com.dev.quikkkk.user_service.dto.request.UpdateUserProfileRequest;
 import com.dev.quikkkk.user_service.dto.request.UpdateUserRoleRequest;
+import com.dev.quikkkk.user_service.dto.response.ApiResponse;
 import com.dev.quikkkk.user_service.dto.response.RoleUpdatedResponse;
 import com.dev.quikkkk.user_service.dto.response.UserProfileResponse;
 import com.dev.quikkkk.user_service.entity.User;
@@ -10,6 +12,7 @@ import com.dev.quikkkk.user_service.mapper.UserMapper;
 import com.dev.quikkkk.user_service.repository.IUserRepository;
 import com.dev.quikkkk.user_service.service.IFileStorageService;
 import com.dev.quikkkk.user_service.service.IUserService;
+import feign.FeignException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +27,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import static com.dev.quikkkk.user_service.exception.ErrorCode.EMAIL_ALREADY_EXISTS;
 import static com.dev.quikkkk.user_service.exception.ErrorCode.FILE_UPLOAD_ERROR;
+import static com.dev.quikkkk.user_service.exception.ErrorCode.INTERNAL_SERVER_ERROR;
 import static com.dev.quikkkk.user_service.exception.ErrorCode.USER_NOT_FOUND;
 
 @Service
@@ -33,6 +37,7 @@ public class UserServiceImpl implements IUserService {
     private final IUserRepository repository;
     private final IFileStorageService fileStorageService;
     private final UserMapper mapper;
+    private final IAuthClient client;
 
     @Override
     @Cacheable(value = "users", key = "#userId", unless = "#result == null")
@@ -116,15 +121,29 @@ public class UserServiceImpl implements IUserService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "users", key = "#userId")
     public RoleUpdatedResponse updateRole(String userId, UpdateUserRoleRequest request) {
         log.info("Updating role for user: {}", userId);
         var user = findUserById(userId);
 
-        log.debug("Updated role: {}", user.getRole());
-        mapper.updateRole(user, request);
-        var savedUser = repository.save(user);
+        try {
+            ApiResponse<RoleUpdatedResponse> response = client.updateUserRole(userId, request);
+            if (!response.success() || response.data() == null) {
+                log.error("Failed to update in auth-service for user: {}", userId);
+                throw new BusinessException(INTERNAL_SERVER_ERROR);
+            }
 
-        return mapper.toRoleResponse(savedUser);
+            user.setRole(request.getRole());
+            repository.save(user);
+
+            log.info("Successfully updated role for user: {} to {}", userId, request.getRole());
+            return response.data();
+        } catch (FeignException e) {
+            log.error("Failed to update in auth-service for user: {}", userId, e);
+            if (e.status() == 404) throw new BusinessException(USER_NOT_FOUND);
+            throw new BusinessException(INTERNAL_SERVER_ERROR);
+        }
     }
 
     @Override
