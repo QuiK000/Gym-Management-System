@@ -1,6 +1,7 @@
 package com.dev.quikkkk.user_service.service.impl;
 
 import com.dev.quikkkk.user_service.dto.request.UpdateUserProfileRequest;
+import com.dev.quikkkk.user_service.dto.request.UpdateUserRoleRequest;
 import com.dev.quikkkk.user_service.dto.response.UserProfileResponse;
 import com.dev.quikkkk.user_service.entity.User;
 import com.dev.quikkkk.user_service.exception.BusinessException;
@@ -111,6 +112,18 @@ public class UserServiceImpl implements IUserService {
 
         log.info("Avatar uploaded successfully for user: {}", userId);
         return avatarUrl;
+    }
+
+    @Override
+    public UserProfileResponse updateRole(String userId, UpdateUserRoleRequest request) {
+        log.info("Updating role for user: {}", userId);
+        var user = findUserById(userId);
+
+        log.debug("Updated role: {}", user.getRole());
+        mapper.updateRole(user, request);
+        var savedUser = repository.save(user);
+
+        return mapper.toUserProfile(savedUser);
     }
 
     @Override

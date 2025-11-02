@@ -2,6 +2,7 @@ package com.dev.quikkkk.user_service.kafka;
 
 import com.dev.quikkkk.user_service.dto.kafka.UserRegisteredEvent;
 import com.dev.quikkkk.user_service.entity.User;
+import com.dev.quikkkk.user_service.enums.RoleTypes;
 import com.dev.quikkkk.user_service.repository.IUserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -52,7 +53,7 @@ public class UserEventConsumer {
                     .firstName(event.getFirstName())
                     .lastName(event.getLastName())
                     .email(event.getEmail())
-                    .role(event.getRole())
+                    .role(RoleTypes.valueOf(event.getRole()))
                     .phone(null)
                     .dateOfBirth(null)
                     .gender(null)

@@ -1,5 +1,7 @@
 package com.dev.quikkkk.user_service.entity;
 
+import com.dev.quikkkk.user_service.enums.GenderType;
+import com.dev.quikkkk.user_service.enums.RoleTypes;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -37,7 +39,8 @@ public class User extends BaseEntity {
     private String email;
 
     @Column(name = "role", nullable = false)
-    private String role;
+    @Enumerated(EnumType.STRING)
+    private RoleTypes role;
 
     @Column(name = "phone")
     private String phone;

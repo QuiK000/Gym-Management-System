@@ -1,6 +1,7 @@
 package com.dev.quikkkk.user_service.service;
 
 import com.dev.quikkkk.user_service.dto.request.UpdateUserProfileRequest;
+import com.dev.quikkkk.user_service.dto.request.UpdateUserRoleRequest;
 import com.dev.quikkkk.user_service.dto.response.UserProfileResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,6 +16,8 @@ public interface IUserService {
     Page<UserProfileResponse> getAllUsers(int page, int size, String role, String search);
 
     String uploadAvatar(String userId, MultipartFile file);
+
+    UserProfileResponse updateRole(String userId, UpdateUserRoleRequest request);
 
     void deleteAvatar(String userId);
 }

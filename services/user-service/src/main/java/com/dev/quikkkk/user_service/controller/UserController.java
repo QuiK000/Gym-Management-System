@@ -1,6 +1,7 @@
 package com.dev.quikkkk.user_service.controller;
 
 import com.dev.quikkkk.user_service.dto.request.UpdateUserProfileRequest;
+import com.dev.quikkkk.user_service.dto.request.UpdateUserRoleRequest;
 import com.dev.quikkkk.user_service.dto.response.ApiResponse;
 import com.dev.quikkkk.user_service.dto.response.AvatarUploadResponse;
 import com.dev.quikkkk.user_service.dto.response.UserProfileResponse;
@@ -77,6 +78,16 @@ public class UserController {
             @Valid @RequestBody UpdateUserProfileRequest request
     ) {
         UserProfileResponse user = service.updateUserProfile(principal.id(), request);
+        return ResponseEntity.ok(ApiResponse.success(user));
+    }
+
+    @PutMapping("{user-id}/role")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> updateRole(
+            @PathVariable("user-id") String userId,
+            @RequestBody @Valid UpdateUserRoleRequest request
+    ) {
+        UserProfileResponse user = service.updateRole(userId, request);
         return ResponseEntity.ok(ApiResponse.success(user));
     }
 

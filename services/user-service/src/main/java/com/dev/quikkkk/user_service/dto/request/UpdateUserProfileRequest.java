@@ -1,6 +1,6 @@
 package com.dev.quikkkk.user_service.dto.request;
 
-import com.dev.quikkkk.user_service.entity.GenderType;
+import com.dev.quikkkk.user_service.enums.GenderType;
 import com.dev.quikkkk.user_service.validation.NonDisposableEmail;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;

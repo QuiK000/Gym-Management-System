@@ -1,6 +1,7 @@
 package com.dev.quikkkk.user_service.mapper;
 
 import com.dev.quikkkk.user_service.dto.request.UpdateUserProfileRequest;
+import com.dev.quikkkk.user_service.dto.request.UpdateUserRoleRequest;
 import com.dev.quikkkk.user_service.dto.response.UserProfileResponse;
 import com.dev.quikkkk.user_service.entity.User;
 import io.micrometer.common.util.StringUtils;
@@ -24,6 +25,10 @@ public class UserMapper {
                 .emergencyContactName(user.getEmergencyContactName())
                 .emergencyContactPhone(user.getEmergencyContactPhone())
                 .build();
+    }
+
+    public void updateRole(User user, UpdateUserRoleRequest request) {
+        user.setRole(request.getRole());
     }
 
     public void mergeUser(User user, UpdateUserProfileRequest request) {

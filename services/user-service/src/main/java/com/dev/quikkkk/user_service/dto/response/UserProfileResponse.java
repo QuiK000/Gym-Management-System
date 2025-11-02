@@ -1,6 +1,6 @@
 package com.dev.quikkkk.user_service.dto.response;
 
-import com.dev.quikkkk.user_service.entity.GenderType;
+import com.dev.quikkkk.user_service.enums.GenderType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
