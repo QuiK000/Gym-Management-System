@@ -123,6 +123,20 @@ public class UserServiceImpl implements IUserService {
     @Override
     @Transactional
     @CacheEvict(value = "users", key = "#userId")
+    public String deleteUser(String userId) {
+        log.info("Deleting user: {}", userId);
+        var user = findUserById(userId);
+
+        fileStorageService.deleteFile(user.getAvatarUrl());
+        repository.delete(user);
+
+        log.info("User deleted successfully: {}", userId);
+        return userId;
+    }
+
+    @Override
+    @Transactional
+    @CacheEvict(value = "users", key = "#userId")
     public RoleUpdatedResponse updateRole(String userId, UpdateUserRoleRequest request) {
         log.info("Updating role for user: {}", userId);
         var user = findUserById(userId);

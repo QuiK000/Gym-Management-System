@@ -18,6 +18,8 @@ public interface IUserService {
 
     String uploadAvatar(String userId, MultipartFile file);
 
+    String deleteUser(String userId);
+
     RoleUpdatedResponse updateRole(String userId, UpdateUserRoleRequest request);
 
     void deleteAvatar(String userId);
