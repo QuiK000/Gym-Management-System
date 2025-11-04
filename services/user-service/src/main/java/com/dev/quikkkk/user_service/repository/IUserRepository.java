@@ -8,20 +8,24 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 public interface IUserRepository extends JpaRepository<User, String> {
     boolean existsByEmail(String email);
 
-    @Query("""
-            SELECT u FROM User u WHERE
-            (COALESCE(:role, '') = '' OR u.role = :role) AND
-            (COALESCE(:search, '') = '' OR
-             LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) OR
-             LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%')) OR
-             LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%')))
-            ORDER BY u.createdDate DESC
-            """)
+    @Query("SELECT u FROM User u WHERE " +
+            "(:role IS NULL OR u.role = :role) AND " +
+            "(:search IS NULL OR LOWER(u.firstName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(u.lastName) LIKE LOWER(CONCAT('%', :search, '%')) OR " +
+            "LOWER(u.email) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
+            "u.deleted = false")
     Page<User> findAllWithFilters(@Param("role") String role,
                                   @Param("search") String search,
                                   Pageable pageable);
+
+    @Query("SELECT u FROM User u WHERE u.deleted = false AND u.id = :id")
+    Optional<User> findByIdAndNotDeleted(@Param("id") String id);
+
+    boolean existsByEmailAndDeletedFalse(String email);
 }

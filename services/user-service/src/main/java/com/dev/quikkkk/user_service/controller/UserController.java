@@ -99,4 +99,13 @@ public class UserController {
         service.deleteAvatar(principal.id());
         return ResponseEntity.ok(ApiResponse.success(null));
     }
+
+    @DeleteMapping("/{user-id}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<ApiResponse<String>> deleteUserById(
+            @PathVariable("user-id") String userId
+    ) {
+        service.deleteUser(userId);
+        return ResponseEntity.ok(ApiResponse.success(userId));
+    }
 }

@@ -25,6 +25,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.LocalDateTime;
+
 import static com.dev.quikkkk.user_service.exception.ErrorCode.EMAIL_ALREADY_EXISTS;
 import static com.dev.quikkkk.user_service.exception.ErrorCode.FILE_UPLOAD_ERROR;
 import static com.dev.quikkkk.user_service.exception.ErrorCode.INTERNAL_SERVER_ERROR;
@@ -52,7 +54,7 @@ public class UserServiceImpl implements IUserService {
     public UserProfileResponse updateUserProfile(String userId, UpdateUserProfileRequest request) {
         var user = findUserById(userId);
         if (request.getEmail() != null && !request.getEmail().equals(user.getEmail())) {
-            if (repository.existsByEmail(request.getEmail())) {
+            if (repository.existsByEmailAndDeletedFalse(request.getEmail())) {
                 throw new BusinessException(EMAIL_ALREADY_EXISTS);
             }
         }
@@ -127,10 +129,25 @@ public class UserServiceImpl implements IUserService {
         log.info("Deleting user: {}", userId);
         var user = findUserById(userId);
 
-        fileStorageService.deleteFile(user.getAvatarUrl());
-        repository.delete(user);
+        if (user.isDeleted()) {
+            log.warn("User {} is already deleted", userId);
+            return userId;
+        }
 
-        log.info("User deleted successfully: {}", userId);
+        user.setDeleted(true);
+        user.setDeletedAt(LocalDateTime.now());
+        repository.save(user);
+
+        if (user.getAvatarUrl() != null && !user.getAvatarUrl().isEmpty()) {
+            try {
+                fileStorageService.deleteFile(user.getAvatarUrl());
+                log.debug("Avatar deleted for user: {}", userId);
+            } catch (Exception e) {
+                log.error("Failed to delete avatar: {}", user.getAvatarUrl(), e);
+            }
+        }
+
+        log.info("User deleted successfully for user: {}", userId);
         return userId;
     }
 
@@ -186,6 +203,6 @@ public class UserServiceImpl implements IUserService {
     }
 
     private User findUserById(String userId) {
-        return repository.findById(userId).orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
+        return repository.findByIdAndNotDeleted(userId).orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
     }
 }

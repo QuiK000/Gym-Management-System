@@ -63,4 +63,10 @@ public class User extends BaseEntity {
 
     @Column(name = "emergency_contact_phone")
     private String emergencyContactPhone;
+
+    @Column(name = "deleted", nullable = false)
+    private boolean deleted = false;
+
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
 }
