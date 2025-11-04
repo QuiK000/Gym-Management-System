@@ -56,8 +56,6 @@ public class LocalFileStorageServiceImpl implements IFileStorageService {
     @Value("${app.avatar.max-height}")
     private int maxHeight;
 
-    private static final int THUMBNAIL_SIZE = 500;
-
     @Override
     public String uploadFile(MultipartFile file, String userId) {
         log.info("Uploading avatar for user: {}", userId);
