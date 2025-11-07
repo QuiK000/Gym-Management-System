@@ -40,10 +40,7 @@ public class RedisConfig {
             ObjectMapper redisObjectMapper
     ) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
-
-        // Используем Jackson с TypeReference
-        GenericJackson2JsonRedisSerializer serializer =
-                new GenericJackson2JsonRedisSerializer(redisObjectMapper);
+        GenericJackson2JsonRedisSerializer serializer = new GenericJackson2JsonRedisSerializer(redisObjectMapper);
 
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
