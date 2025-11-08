@@ -40,7 +40,8 @@ public enum ErrorCode {
     TRAINER_PROFILE_ALREADY_EXISTS("TRAINER_PROFILE_ALREADY_EXISTS", "Trainer profile already exists", HttpStatus.BAD_REQUEST),
     TRAINER_NOT_FOUND("TRAINER_NOT_FOUND", "Trainer not found", HttpStatus.NOT_FOUND),
     START_TIME_AFTER_END_TIME("START_TIME_AFTER_END_TIME", "Start time must be before end time", HttpStatus.BAD_REQUEST),
-    SCHEDULE_NOT_FOUND("SCHEDULE_NOT_FOUND", "Schedule not found", HttpStatus.NOT_FOUND);
+    SCHEDULE_NOT_FOUND("SCHEDULE_NOT_FOUND", "Schedule not found", HttpStatus.NOT_FOUND),
+    CANNOT_DELETE_OTHER_TRAINERS_SCHEDULE("CANNOT_DELETE_OTHER_TRAINERS_SCHEDULE", "Cannot delete other trainer's schedule", HttpStatus.FORBIDDEN);
 
     private final String code;
     private final String defaultMessage;

@@ -25,11 +25,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.scheduling.annotation.SchedulingConfigurer;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
+import static com.dev.quikkkk.user_service.exception.ErrorCode.CANNOT_DELETE_OTHER_TRAINERS_SCHEDULE;
 import static com.dev.quikkkk.user_service.exception.ErrorCode.INVALID_ROLE_TRAINER;
+import static com.dev.quikkkk.user_service.exception.ErrorCode.SCHEDULE_NOT_FOUND;
+import static com.dev.quikkkk.user_service.exception.ErrorCode.START_TIME_AFTER_END_TIME;
 import static com.dev.quikkkk.user_service.exception.ErrorCode.TRAINER_NOT_FOUND;
 import static com.dev.quikkkk.user_service.exception.ErrorCode.TRAINER_PROFILE_ALREADY_EXISTS;
 import static com.dev.quikkkk.user_service.exception.ErrorCode.USER_NOT_FOUND;
@@ -43,6 +47,7 @@ public class TrainerServiceImpl implements ITrainerService {
     private final IUserRepository userRepository;
     private final TrainerMapper trainerMapper;
     private final TrainerScheduleMapper trainerScheduleMapper;
+    private final SchedulingConfigurer schedulingConfigurer;
 
     @Override
     @Transactional
@@ -119,17 +124,49 @@ public class TrainerServiceImpl implements ITrainerService {
     @Transactional
     @CacheEvict(value = "trainers", key = "'schedule:' + #result.id")
     public TrainerScheduleResponse addScheduleSlot(String userId, CreateTrainerScheduleRequest request) {
-        return null;
+        log.info("Adding schedule slot for user: {}", userId);
+        TrainerProfile trainer = trainerRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(TRAINER_NOT_FOUND));
+
+        if (request.getStartTime().isAfter(request.getEndTime()))
+            throw new BusinessException(START_TIME_AFTER_END_TIME);
+
+        TrainerSchedule schedule = trainerScheduleMapper.toScheduleEntity(trainer.getId(), request);
+        TrainerSchedule savedSchedule = trainerScheduleRepository.save(schedule);
+
+        log.info("Schedule slot added successfully for trainer: {}", trainer.getId());
+        return trainerScheduleMapper.toScheduleResponse(savedSchedule);
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "trainers", allEntries = true)
     public void deleteScheduleSlot(String userId, String scheduleId) {
+        log.info("Deleting schedule slot: {} for user: {}", scheduleId, userId);
+        TrainerProfile trainer = trainerRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(TRAINER_NOT_FOUND));
+        TrainerSchedule schedule = trainerScheduleRepository.findById(scheduleId)
+                .orElseThrow(() -> new BusinessException(SCHEDULE_NOT_FOUND));
 
+        if (!schedule.getTrainerId().equals(trainer.getId()))
+            throw new BusinessException(CANNOT_DELETE_OTHER_TRAINERS_SCHEDULE);
+
+        trainerScheduleRepository.delete(schedule);
+        log.info("Schedule slot deleted successfully for trainer: {}", trainer.getId());
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "trainers", allEntries = true)
     public void deleteTrainerProfile(String userId) {
+        log.info("Deleting trainer profile for user: {}", userId);
+        TrainerProfile trainer = trainerRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(TRAINER_NOT_FOUND));
 
+        trainerScheduleRepository.deleteByTrainerId(trainer.getId());
+        trainerRepository.deleteById(trainer.getId());
+
+        log.info("Trainer profile deleted successfully for user: {}", userId);
     }
 
     private User findByUserId(String userId) {
