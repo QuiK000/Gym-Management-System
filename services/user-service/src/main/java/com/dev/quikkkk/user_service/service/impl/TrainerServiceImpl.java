@@ -82,7 +82,7 @@ public class TrainerServiceImpl implements ITrainerService {
     }
 
     @Override
-    @Cacheable(value = "trainers", key = "#userId", unless = "#result == null")
+    @Cacheable(value = "trainers", key = "#trainerId", unless = "#result == null")
     public TrainerResponse getTrainerProfile(String trainerId) {
         log.info("Getting trainer profile: {}", trainerId);
         TrainerProfile trainer = trainerRepository.findById(trainerId)
