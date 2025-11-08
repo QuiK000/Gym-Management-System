@@ -1,5 +1,6 @@
 package com.dev.quikkkk.user_service.mapper;
 
+import com.dev.quikkkk.user_service.dto.request.CreateTrainerProfileRequest;
 import com.dev.quikkkk.user_service.dto.request.UpdateTrainerProfileRequest;
 import com.dev.quikkkk.user_service.dto.response.TrainerResponse;
 import com.dev.quikkkk.user_service.entity.TrainerProfile;
@@ -31,5 +32,18 @@ public class TrainerMapper {
         if (request.getBio() != null) trainer.setBio(request.getBio());
         if (request.getHourlyRate() != null) trainer.setHourlyRate(request.getHourlyRate());
         if (request.getIsAvailable() != null) trainer.setIsAvailable(request.getIsAvailable());
+    }
+
+    public TrainerProfile createProfile(String userId, CreateTrainerProfileRequest request) {
+        return TrainerProfile.builder()
+                .userId(userId)
+                .specialization(request.getSpecialization())
+                .certification(request.getCertification())
+                .experienceYears(request.getExperienceYears())
+                .bio(request.getBio())
+                .hourlyRate(request.getHourlyRate())
+                .isAvailable(request.getIsAvailable() != null ? request.getIsAvailable() : true)
+                .createdBy(userId)
+                .build();
     }
 }

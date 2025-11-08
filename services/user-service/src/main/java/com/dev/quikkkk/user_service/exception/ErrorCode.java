@@ -35,7 +35,9 @@ public enum ErrorCode {
     FILE_SIZE_EXCEEDED("FILE_SIZE_EXCEEDED", "File size exceeds maximum allowed size of 5MB", HttpStatus.BAD_REQUEST),
     INVALID_FILE_EXTENSION("INVALID_FILE_EXTENSION", "Invalid file extension. Allowed: jpg, jpeg, png, gif, webp", HttpStatus.BAD_REQUEST),
     INVALID_IMAGE_FILE("INVALID_IMAGE_FILE", "File is not a valid image", HttpStatus.BAD_REQUEST),
-    INVALID_IMAGE_DIMENSIONS("INVALID_IMAGE_DIMENSIONS", "Image dimensions must be between 100x100 and 2000x2000 pixels", HttpStatus.BAD_REQUEST);
+    INVALID_IMAGE_DIMENSIONS("INVALID_IMAGE_DIMENSIONS", "Image dimensions must be between 100x100 and 2000x2000 pixels", HttpStatus.BAD_REQUEST),
+    INVALID_ROLE_TRAINER("INVALID_ROLE_TRAINER", "User is not a trainer", HttpStatus.FORBIDDEN),
+    TRAINER_PROFILE_ALREADY_EXISTS("TRAINER_PROFILE_ALREADY_EXISTS", "Trainer profile already exists", HttpStatus.BAD_REQUEST);
 
     private final String code;
     private final String defaultMessage;
