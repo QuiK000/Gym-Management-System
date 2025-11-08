@@ -32,5 +32,5 @@ public class UpdateTrainerProfileRequest {
 
     @DecimalMin(value = "0.0", message = "VALIDATION.UPDATE.TRAINER.PROFILE.HOURLY_RATE.MIN")
     private BigDecimal hourlyRate;
-    private boolean isAvailable;
+    private Boolean isAvailable;
 }
