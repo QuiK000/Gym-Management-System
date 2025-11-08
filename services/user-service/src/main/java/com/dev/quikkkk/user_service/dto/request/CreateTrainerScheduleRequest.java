@@ -10,6 +10,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalTime;
+
 @Getter
 @Setter
 @Builder
@@ -20,8 +22,8 @@ public class CreateTrainerScheduleRequest {
     private DayOfWeek dayOfWeek;
 
     @NotNull(message = "VALIDATION.CREATE.TRAINER.SCHEDULE.REQUEST.START_TIME.NOT_NULL")
-    private String startTime;
+    private LocalTime startTime;
 
     @NotNull(message = "VALIDATION.CREATE.TRAINER.SCHEDULE.REQUEST.END_TIME.NOT_NULL")
-    private String endTime;
+    private LocalTime endTime;
 }
