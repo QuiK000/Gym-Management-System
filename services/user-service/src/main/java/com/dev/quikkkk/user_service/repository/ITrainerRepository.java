@@ -12,15 +12,19 @@ import java.util.Optional;
 
 @Repository
 public interface ITrainerRepository extends JpaRepository<TrainerProfile, String> {
+
     Optional<TrainerProfile> findByUserId(String userId);
 
     @Query("""
             SELECT t FROM TrainerProfile t
             JOIN t.user u
             WHERE t.isAvailable = true
-            AND (:specialization IS NULL OR :specialization = ANY(t.specialization))
+            AND (:specialization IS NULL OR :specialization MEMBER OF t.specialization)
             """)
-    Page<TrainerProfile> findAvailablyTrainers(@Param("Specialization") String specialization, Pageable pageable);
+    Page<TrainerProfile> findAvailablyTrainers(
+            @Param("specialization") String specialization,
+            Pageable pageable);
 
     boolean existsByUserId(String userId);
 }
+

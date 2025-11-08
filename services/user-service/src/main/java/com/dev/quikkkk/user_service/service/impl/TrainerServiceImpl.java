@@ -18,6 +18,7 @@ import com.dev.quikkkk.user_service.service.ITrainerService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
@@ -54,8 +55,17 @@ public class TrainerServiceImpl implements ITrainerService {
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "trainers", allEntries = true)
     public TrainerResponse updateTrainerProfile(String userId, UpdateTrainerProfileRequest request) {
-        return null;
+        log.info("Updating trainer profile for user: {}", userId);
+
+        var trainer = trainerRepository.findByUserId(userId).orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
+        trainerMapper.updateTrainerProfile(trainer, request);
+        var updatedTrainer = trainerRepository.save(trainer);
+
+        log.info("Trainer profile updated successfully for user: {}", userId);
+        return trainerMapper.toTrainerResponse(updatedTrainer);
     }
 
     @Override

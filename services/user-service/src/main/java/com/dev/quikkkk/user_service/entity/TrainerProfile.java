@@ -2,6 +2,7 @@ package com.dev.quikkkk.user_service.entity;
 
 import com.dev.quikkkk.user_service.enums.GenderType;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -38,6 +39,7 @@ public class TrainerProfile extends BaseEntity {
     private String userId;
 
     @Column(name = "specialization")
+    @ElementCollection
     private List<String> specialization;
 
     @Column(name = "certification")
