@@ -5,10 +5,11 @@ import com.dev.quikkkk.user_service.dto.request.CreateTrainerScheduleRequest;
 import com.dev.quikkkk.user_service.dto.request.UpdateTrainerProfileRequest;
 import com.dev.quikkkk.user_service.dto.response.TrainerResponse;
 import com.dev.quikkkk.user_service.dto.response.TrainerScheduleResponse;
+import com.dev.quikkkk.user_service.entity.TrainerProfile;
+import com.dev.quikkkk.user_service.entity.TrainerSchedule;
 import com.dev.quikkkk.user_service.entity.User;
 import com.dev.quikkkk.user_service.enums.RoleTypes;
 import com.dev.quikkkk.user_service.exception.BusinessException;
-import com.dev.quikkkk.user_service.exception.ErrorCode;
 import com.dev.quikkkk.user_service.mapper.TrainerMapper;
 import com.dev.quikkkk.user_service.mapper.TrainerScheduleMapper;
 import com.dev.quikkkk.user_service.repository.ITrainerRepository;
@@ -19,12 +20,17 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 import static com.dev.quikkkk.user_service.exception.ErrorCode.INVALID_ROLE_TRAINER;
+import static com.dev.quikkkk.user_service.exception.ErrorCode.TRAINER_NOT_FOUND;
 import static com.dev.quikkkk.user_service.exception.ErrorCode.TRAINER_PROFILE_ALREADY_EXISTS;
 import static com.dev.quikkkk.user_service.exception.ErrorCode.USER_NOT_FOUND;
 
@@ -60,30 +66,58 @@ public class TrainerServiceImpl implements ITrainerService {
     public TrainerResponse updateTrainerProfile(String userId, UpdateTrainerProfileRequest request) {
         log.info("Updating trainer profile for user: {}", userId);
 
-        var trainer = trainerRepository.findByUserId(userId).orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
+        TrainerProfile trainer = trainerRepository.findByUserId(userId)
+                .orElseThrow(() -> new BusinessException(USER_NOT_FOUND));
         trainerMapper.updateTrainerProfile(trainer, request);
-        var updatedTrainer = trainerRepository.save(trainer);
+
+        TrainerProfile updatedTrainer = trainerRepository.save(trainer);
 
         log.info("Trainer profile updated successfully for user: {}", userId);
         return trainerMapper.toTrainerResponse(updatedTrainer);
     }
 
     @Override
+    @Cacheable(value = "trainers", key = "#userId", unless = "#result == null")
     public TrainerResponse getTrainerProfile(String trainerId) {
-        return null;
+        log.info("Getting trainer profile: {}", trainerId);
+        TrainerProfile trainer = trainerRepository.findById(trainerId)
+                .orElseThrow(() -> new BusinessException(TRAINER_NOT_FOUND));
+
+        return trainerMapper.toTrainerResponse(trainer);
     }
 
     @Override
+    @Cacheable(value = "trainers", key = "'list:' + #page + ':' + #size + ':' + #specialization")
     public Page<TrainerResponse> getAllTrainers(int page, int size, String specialization) {
-        return null;
+        log.info("Getting all trainers. Page: {}, Size: {}, Specialization: {}", page, size, specialization);
+
+        if (page < 0) page = 0;
+        if (size <= 0) size = 20;
+        if (size > 100) size = 100;
+
+        Pageable pageable = PageRequest.of(page, size, Sort.by("experienceYears").descending());
+        Page<TrainerProfile> trainers = trainerRepository.findAvailablyTrainers(specialization, pageable);
+        Page<TrainerResponse> response = trainers.map(trainerMapper::toTrainerResponse);
+
+        log.info("Retrieved {} trainers out of {} total", response.getNumberOfElements(), response.getTotalElements());
+        return response;
     }
 
     @Override
+    @Cacheable(value = "trainers", key = "'schedule:' + #trainerId")
     public List<TrainerScheduleResponse> getTrainerSchedule(String trainerId) {
-        return List.of();
+        log.info("Getting schedule for trainer: {}", trainerId);
+        if (!trainerRepository.existsById(trainerId)) throw new BusinessException(TRAINER_NOT_FOUND);
+        List<TrainerSchedule> schedules = trainerScheduleRepository.findByTrainerIdAndIsActiveTrue(trainerId);
+
+        return schedules.stream()
+                .map(trainerScheduleMapper::toScheduleResponse)
+                .toList();
     }
 
     @Override
+    @Transactional
+    @CacheEvict(value = "trainers", key = "'schedule:' + #result.id")
     public TrainerScheduleResponse addScheduleSlot(String userId, CreateTrainerScheduleRequest request) {
         return null;
     }
